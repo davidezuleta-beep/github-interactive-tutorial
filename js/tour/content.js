@@ -1,7 +1,7 @@
 /*
  * CONTENIDO DEL RECORRIDO EDUCATIVO
  * ---------------------------------
- * Aquí se definen la bienvenida, los 8 módulos, sus pasos, el glosario y los retos.
+ * Aquí se definen la bienvenida, los 8 módulos, sus pasos, el glosario, los desafíos y la gamificación.
  * Para cambiar textos o agregar pasos solo necesitas editar este archivo.
  *
  * REGLA DE ORO: cada concepto se explica en palabras sencillas la primera vez que aparece
@@ -82,6 +82,7 @@
     </div>
     <ol class="howto-list">
       <li><span class="hl-ic">${GH.icon('unmute')}</span><span><strong>Escucha a tu guía.</strong> Te habla en cada paso, te explica y te invita a actuar. Con el botón ${GH.icon('play')} del globo repites lo que dijo; con <strong>Voz</strong> en la barra la apagas o la enciendes.</span></li>
+      <li><span class="hl-ic">${GH.icon('star-fill')}</span><span><strong>Gana puntos e insignias.</strong> Cada paso suma puntos (más si lo logras a la primera) y cada misión te da una insignia. Pulsa tus puntos, en la barra, para ver tus logros y desafíos.</span></li>
       <li><span class="hl-ic">${GH.icon('comment')}</span><span><strong>Lee el globo.</strong> Te explica cada parte de GitHub y te dice qué hacer. Las instrucciones empiezan con 👉.</span></li>
       <li><span class="hl-ic hl-ring"></span><span><strong>Haz clic en lo que tiene borde azul brillante.</strong> Es el botón o la zona que debes usar en ese paso.</span></li>
       <li><span class="hl-ic">${GH.icon('arrow-right')}</span><span>Si el paso es solo para leer, pulsa <strong>Continuar</strong>.</span></li>
@@ -92,6 +93,7 @@
     </ol>
     <div class="howto-dock">
       <div class="hdk-title">La barra de abajo a la izquierda te acompaña siempre:</div>
+      <div class="hdk-row"><span class="hdk-k">${GH.icon('star-fill')} Puntos</span><span>tus puntos y tu nivel. Púlsalos para ver insignias, desafíos y tu premio final.</span></div>
       <div class="hdk-row"><span class="hdk-k">${GH.icon('arrow-left')} Atrás</span><span>vuelve al paso anterior y deshace lo que hiciste en él.</span></div>
       <div class="hdk-row"><span class="hdk-k">${GH.icon('sync')} Repetir</span><span>empieza de nuevo el paso actual (útil si cerraste un menú sin querer).</span></div>
       <div class="hdk-row"><span class="hdk-k">${GH.icon('list-unordered')} Índice</span><span>muestra los 8 módulos para saltar a cualquiera.</span></div>
@@ -130,8 +132,8 @@
       body: `<p>Lo que verás es una <strong>réplica de las pantallas de GitHub</strong> en un entorno seguro: no usa cuentas, contraseñas ni proyectos reales. Todo ocurre en tu navegador y puedes equivocarte sin miedo.</p>
         <ul class="intro-list">
           <li>${GH.icon('globe')} <span>Las pantallas están en <strong>inglés</strong>, como en el GitHub real. La guía te traduce cada botón importante.</span></li>
-          <li>${GH.icon('mortar-board')} <span>Son <strong>8 módulos cortos</strong>. Cada uno toma entre 3 y 8 minutos y puedes hacerlos en el orden que quieras.</span></li>
-          <li>${GH.icon('check-circle')} <span>Tu avance se guarda en este navegador: puedes cerrar y continuar después.</span></li>
+          <li>${GH.icon('mortar-board')} <span>Son <strong>8 misiones cortas</strong> (una por módulo). Cada una toma entre 3 y 8 minutos y puedes hacerlas en el orden que quieras.</span></li>
+          <li>${GH.icon('check-circle')} <span>Tu avance, tus puntos y tus insignias se guardan en este navegador: puedes cerrar y continuar después.</span></li>
         </ul>
         <label class="form-label mt-3" for="intro-name">¿Cómo te llamas? <span class="muted" style="font-weight:400">(opcional, para personalizar tu cuenta de práctica)</span></label>
         <input class="form-control" id="intro-name" placeholder="Ej.: Laura Gómez" autocomplete="off" maxlength="40">
@@ -306,7 +308,7 @@
       learn: [],
       prepare() { const r = ctx.repo(); GH.router.go(r ? ctx.repoHash() : '#/'); },
       steps: [
-        { title: '¡Completaste el recorrido! 🎓', body: 'Ya conoces lo esencial de GitHub: repositorios, commits, ramas, pull requests, merge, visibilidad y colaboradores.<br><br>Ahora navega libremente. En la barra de abajo tienes <strong>Retos</strong> para practicar, el <strong>Glosario</strong> con todas las palabras nuevas y el <strong>Recorrido guiado</strong> para repetir cualquier módulo.', actions: [{ label: 'Empezar a explorar', primary: true, run: () => GH.tour.goFree('challenges') }], advance: { event: 'tour:free' } }
+        { title: '¡Completaste el recorrido! 🎓', body: 'Ya conoces lo esencial de GitHub: repositorios, commits, ramas, pull requests, merge, visibilidad y colaboradores.<br><br>Ahora navega libremente. En la barra de abajo tienes tus <strong>Logros</strong> con los <strong>desafíos</strong> para practicar, el <strong>Glosario</strong> con todas las palabras nuevas y el <strong>Recorrido guiado</strong> para repetir cualquier módulo.', actions: [{ label: 'Empezar a explorar', primary: true, run: () => GH.tour.goFree('challenges') }], advance: { event: 'tour:free' } }
       ]
     }
   ];
@@ -361,7 +363,7 @@
     { k: 'checks', t: 'Checks', d: 'Revisiones automáticas (hechas con Actions) que comprueban un pull request antes de unirlo.', a: ['Checks'] }
   ];
 
-  // ---------- Retos de exploración libre ----------
+  // ---------- Desafíos de exploración libre (cada uno da puntos) ----------
   const mine = () => S().myRepos();
   const challenges = [
     ['Marca un repositorio con una estrella ⭐', 'Abre el recetario de la comunidad y pulsa Star.', () => S().visibleRepos().some(r => r.starred)],
@@ -373,5 +375,48 @@
     ['Haz un fork del recetario', 'Abre comunidad-demo/recetas-familiares y pulsa Fork.', () => mine().some(r => r.forkOf)]
   ];
 
-  GH.tourContent = { intro, modules, glossary, challenges, ctx, T, howTo };
+  // ---------- Gamificación (diseñada por Biniac) ----------
+  // Puntos, niveles, misiones (narrativa), insignias y desafíos. Edita aquí textos y valores.
+  const game = {
+    guide: 'Mariana',
+    story: 'La comunidad del <strong>Recetario Familiar</strong> busca personas que cuiden su proyecto en GitHub. Empiezas como <strong>Visitante</strong>: cada misión que completes te acerca a ser <strong>Maestro/a de GitHub</strong>.',
+    points: { step: 10, firstTry: 5, module: 50, challenge: 30 },
+    levels: [
+      { min: 0, name: 'Visitante', icon: 'person' },
+      { min: 250, name: 'Explorador/a', icon: 'telescope' },
+      { min: 700, name: 'Colaborador/a', icon: 'people' },
+      { min: 1300, name: 'Mantenedor/a', icon: 'tools' },
+      { min: 1900, name: 'Maestro/a de GitHub', icon: 'trophy' }
+    ],
+    // Una misión por módulo (en el mismo orden que «modules»).
+    missions: [
+      { name: 'Conoce el terreno', story: 'Antes de unirte a la comunidad, recorre GitHub y conoce tu perfil.' },
+      { name: 'Tu primer proyecto', story: 'Cada persona de la comunidad tiene su propio espacio. Crea el tuyo.' },
+      { name: 'Visita a la comunidad', story: 'Encuentra el Recetario Familiar y descubre cómo está organizado.' },
+      { name: 'Deja tu huella', story: 'Sube tus primeros archivos y guarda cada versión con un commit.' },
+      { name: 'Un espacio para probar', story: 'Crea una rama para experimentar sin tocar la versión principal.' },
+      { name: 'Propón y une', story: 'Propón tu cambio con un pull request y únelo al proyecto.' },
+      { name: 'Guardián del proyecto', story: 'Decide quién puede ver y editar tu repositorio.' },
+      { name: 'Vuelo propio', story: 'Ya eres parte de la comunidad: explora a tu ritmo y supera los desafíos.' }
+    ],
+    // Insignias (premios). «module» = se gana al completar esa misión; «when» = condición especial.
+    badges: [
+      { id: 'b-m1', module: 0, icon: 'home', name: 'Primeros pasos', desc: 'Completaste la misión 1.' },
+      { id: 'b-m2', module: 1, icon: 'repo', name: 'Fundador/a', desc: 'Creaste tu primer repositorio.' },
+      { id: 'b-m3', module: 2, icon: 'telescope', name: 'Explorador/a', desc: 'Exploraste un proyecto de la comunidad.' },
+      { id: 'b-m4', module: 3, icon: 'history', name: 'Guardián/a del historial', desc: 'Guardaste cambios con commits.' },
+      { id: 'b-m5', module: 4, icon: 'git-branch', name: 'Arquitecto/a de ramas', desc: 'Trabajaste en una rama propia.' },
+      { id: 'b-m6', module: 5, icon: 'git-merge', name: 'Maestro/a del merge', desc: 'Propusiste un cambio y lo uniste.' },
+      { id: 'b-m7', module: 6, icon: 'shield-lock', name: 'Guardián/a de la seguridad', desc: 'Configuraste visibilidad y accesos.' },
+      { id: 'b-m8', module: 7, icon: 'rocket', name: 'Vuelo propio', desc: 'Completaste la misión final.' },
+      { id: 'b-eye', icon: 'eye', name: 'Ojo de águila', desc: 'Completa una misión sin necesitar pistas.', when: (g) => g.cleanModules >= 1 },
+      { id: 'b-ear', icon: 'unmute', name: 'Buen oído', desc: 'Completa 3 misiones con la voz encendida.', when: (g) => g.voiceModules >= 3 },
+      { id: 'b-book', icon: 'book', name: 'Mente curiosa', desc: 'Abre 8 palabras del glosario.', when: (g) => g.terms.length >= 8 },
+      { id: 'b-goal', icon: 'goal', name: 'Retador/a', desc: 'Supera 3 desafíos.', when: (g) => g.challenges.length >= 3 },
+      { id: 'b-grad', icon: 'mortar-board', name: 'Graduado/a Biniac', desc: 'Completa las 8 misiones.', when: (g, ts) => ts.completed.length >= modules.length },
+      { id: 'b-top', icon: 'trophy', name: 'Maestro/a de GitHub', desc: 'Alcanza el nivel 5.', when: (g, ts, lv) => lv.n >= 5 }
+    ]
+  };
+
+  GH.tourContent = { intro, modules, glossary, challenges, ctx, T, howTo, game };
 })(window.GH);

@@ -3,7 +3,8 @@
  * ------------------------------
  * Guiones de voz de la guía. Cada clave identifica un paso: '<id del módulo>:<título del paso>'.
  * Las claves especiales son: 'intro:0'…'intro:3' (bienvenida), 'done:<id del módulo>' (cierre),
- * 'hint:N' (pistas cuando se hace clic en otro lugar) y 'cheer:N' (felicitaciones).
+ * 'hint:N' (pistas cuando se hace clic en otro lugar), 'cheer:N' (felicitaciones), 'welcome:0' (ventana inicial)
+ * y 'badge:0', 'level:0', 'challenge:0', 'grad:0' (premios de la gamificación).
  *
  * Cada entrada tiene el texto que se envió a ElevenLabs. El audio se guarda en audio/<archivo>.mp3.
  * Si un paso no tiene audio, el recorrido sigue funcionando solo con texto.
@@ -13,6 +14,14 @@
 (function (GH) {
   'use strict';
   const lines = [
+    // ---------- Ventana inicial: experiencia con voz y gamificada (Biniac) ----------
+    ['welcome:0', 'welcome-0', '¡Hola! Soy Mariana, tu guía de Biniac. Esta experiencia tiene voz: te voy a hablar en cada paso, así que sube el volumen. Y también es un juego: cada paso te da puntos, cada misión te da una insignia y, al final, tendrás desafíos y un premio. Cuando estés listo o lista, pulsa: ¡Acepto la misión!'],
+    // ---------- Premios ----------
+    ['badge:0', 'badge-0', '¡Misión cumplida! Ganaste una insignia nueva.'],
+    ['level:0', 'level-0', '¡Subiste de nivel! Vas muy bien, sigue así.'],
+    ['challenge:0', 'challenge-0', '¡Desafío superado! Sumaste puntos.'],
+    ['grad:0', 'grad-0', '¡Felicitaciones! Completaste las ocho misiones. Ya eres parte de la comunidad. Abre tus logros para ver tus insignias y tu reconocimiento de Biniac.'],
+
     // ---------- Bienvenida ----------
     ['intro:0', 'intro-0', '¡Hola! Bienvenido a tu práctica de GitHub. Soy tu guía y voy a acompañarte paso a paso. GitHub es un sitio web donde las personas y los equipos guardan sus proyectos, ven cómo cambian con el tiempo y trabajan juntos sin pisarse.'],
     ['intro:1', 'intro-1', 'Aunque GitHub nació para programadores, hoy lo usan equipos de todo tipo: para manuales, documentos, páginas web y proyectos con inteligencia artificial. Tranquilo: no necesitas saber programar.'],
@@ -84,6 +93,7 @@
   // Audios ya grabados y guardados en audio/. Solo estos pasos muestran el botón de voz;
   // los demás funcionan con texto. Al agregar un MP3 nuevo, añade aquí su nombre de archivo.
   const ready = new Set([
+    'welcome-0', 'badge-0', 'level-0', 'challenge-0', 'grad-0',
     'intro-0', 'intro-1', 'intro-2', 'intro-3', 'm1-01', 'm1-02', 'm1-03', 'm1-04',
     'm1-05', 'm1-06', 'm1-07', 'm1-08', 'm1-09', 'm1-10', 'm1-11', 'm1-12',
     'm1-13', 'm1-14', 'done-m1', 'm2-01', 'm2-02', 'm2-03', 'm2-04', 'm2-05',

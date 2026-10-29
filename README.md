@@ -11,6 +11,7 @@ Simulador educativo para que personas sin conocimientos técnicos aprendan a usa
 - **Globos contextuales** con resaltado del elemento, **pistas** cuando se hace clic en el lugar equivocado, y botones **Atrás**, **Repetir paso**, **Repetir módulo** y **Reiniciar todo**.
 - **Glosario de 44 términos** enlazado automáticamente: cada palabra nueva se puede pulsar para ver su significado.
 - **Narración con voz** (ElevenLabs): la guía habla en la bienvenida y en cada paso de los módulos 1 a 3, da pistas en voz alta y felicita al terminar. Se puede pausar, repetir o apagar con el botón **Voz**.
+- **Experiencia gamificada diseñada por Biniac**: al entrar, una ventana explica que hay **voz** y que es un **juego** con puntos, misiones (narrativa), niveles, insignias, desafíos y un premio final.
 - **Exploración libre** con 7 **retos** que se marcan solos, glosario y acceso al índice de módulos.
 - **Simulación funcional**: crear repositorios, subir archivos (de ejemplo o propios, que nunca salen del equipo), editar archivos, commits e historial, ver versiones antiguas, ramas, comparar, pull requests, merge, borrar ramas, issues, comentarios, estrellas, forks, cambiar visibilidad, renombrar, invitar colaboradores y roles.
 
@@ -30,6 +31,7 @@ js/views-*.js           Pantallas (inicio, código, historial, pull requests, co
 js/tour/content.js      ✏️ TEXTOS DEL RECORRIDO: bienvenida, módulos, pasos, glosario y retos
 js/tour/engine.js       Motor del recorrido
 js/tour/narration.js    🔊 GUIONES DE VOZ y lista de audios disponibles
+js/tour/game.js         🏆 Motor de gamificación (puntos, niveles, insignias, desafíos, premio)
 js/tour/voice.js        Reproductor de la voz
 audio/                  Audios MP3 de la narración (ElevenLabs)
 assets/biniac-logo.png  Logo de Biniac (foto de perfil y organización)
@@ -64,7 +66,14 @@ Para resaltar un elemento nuevo, agrégale `data-tour="nombre"` en la vista corr
 
 **Narración con voz.** La guía habla con voces de ElevenLabs (voz *Mariana*, `voice_id` `GUeHs6BPO7Btpp3ZjcQH`, modelo `eleven_v4`). Los guiones están en `js/tour/narration.js`: cada línea es `[clave, archivo, texto]`, donde la clave es `'<id del módulo>:<título exacto del paso>'` (o `intro:N`, `done:<módulo>`, `hint:N`, `cheer:N`). El audio va en `audio/<archivo>.mp3`. Para activar un audio nuevo: genera el MP3 con el mismo texto y la misma voz, guárdalo en `audio/` y añade su nombre de archivo a la lista `ready` de `narration.js`. Los pasos sin audio funcionan solo con texto y no muestran el botón de voz. Si cambias el título de un paso, actualiza también su clave en `narration.js`. La persona puede apagar la voz con el botón **Voz** de la barra (se recuerda en su navegador).
 
-**Retos.** Edita `challenges` (`[título, descripción, función que devuelve true cuando se cumple]`).
+**Gamificación.** Los valores y textos están en la constante `game` de `js/tour/content.js`:
+- `story` (la narrativa), `guide` (nombre de la guía) y `missions` (una misión por módulo, con nombre e historia).
+- `points`: puntos por paso (`step`), extra por lograrlo a la primera sin pistas (`firstTry`), por misión (`module`) y por desafío (`challenge`).
+- `levels`: nombre, ícono y puntos mínimos de cada nivel.
+- `badges`: insignias. Las que tienen `module` se ganan al completar esa misión; las que tienen `when` usan una condición (por ejemplo, abrir 8 palabras del glosario).
+El progreso del juego se guarda en el navegador (`ghsim:game:v1`) y se borra con **Ajustes → Reiniciar todo**. El premio final (reconocimiento de práctica de Biniac) se desbloquea al completar las 8 misiones.
+
+**Desafíos.** Edita `challenges` (`[título, descripción, función que devuelve true cuando se cumple]`).
 
 **Datos de ejemplo.** El recetario de la comunidad y los demás datos ficticios se definen en la función `seed()` de `js/store.js`.
 

@@ -14,14 +14,17 @@
   let els = {};
 
   function save() { GH.storage.set(KEY, ts); }
-  function defaults() { return { introDone: false, mode: 'intro', m: 0, s: 0, completed: [], panelTab: 'modules' }; }
+  function defaults() { return { welcomeSeen: false, introDone: false, mode: 'intro', m: 0, s: 0, completed: [], panelTab: 'modules' }; }
   const mod = () => C().modules[ts.m];
   const step = () => ts.mode === 'guided' && mod() ? mod().steps[ts.s] : null;
   const val = (v) => (typeof v === 'function' ? v(C().ctx) : v);
   const V = () => GH.voice || { play() {}, stop() {}, say() {}, has: () => false, isEnabled: () => false, speaking: () => false, current: () => null };
+  const NOOP_G = { moduleStart() {}, hint() {}, term() {}, stepDone: () => 0, moduleComplete: () => ({ pts: 0, bonus: 0, total: 0, badges: [], levelUp: null }), hudHTML: () => '', panelHTML: () => '', completionHTML: () => '', missionBanner: () => '', welcomeHTML: () => '', stepValue: () => 0, reset() {}, state: () => ({ challenges: [] }) };
+  const G = () => GH.game || NOOP_G;
   const stepKey = () => { const st = step(); return st ? mod().id + ':' + st.title : null; };
   function voiceKeyNow() {
-    if (layer() && layer().querySelector('.tour-intro')) return 'intro:' + layer().querySelector('.tour-intro').dataset.i;
+    if (layer() && layer().querySelector('.tour-welcome')) return 'welcome:0';
+    if (layer() && layer().querySelector('.tour-intro:not(.tour-welcome)')) return 'intro:' + layer().querySelector('.tour-intro:not(.tour-welcome)').dataset.i;
     if (ts && ts.mode === 'guided' && mod() && ts.s >= mod().steps.length) return V().has('done:' + mod().id) ? 'done:' + mod().id : null;
     return stepKey();
   }
@@ -112,6 +115,7 @@
   // ---------------- Init ----------------
   tour.init = function () {
     ts = Object.assign(defaults(), GH.storage.get(KEY) || {});
+    if (G().sync) G().sync(ts);
     buildLayer();
     window.addEventListener('click', onClickCapture, true);
     GH.bus.on('*', onBusEvent);
@@ -123,13 +127,37 @@
     });
     GH.bus.on('voice:state', updateVoiceUI);
     GH.bus.on('state:changed', () => { if (els.panel && els.panel.classList.contains('open') && ts.panelTab === 'challenges') renderPanel(); renderDock(); });
+    GH.bus.on('game:changed', () => { if (els.panel && els.panel.classList.contains('open') && ts.panelTab === 'challenges') renderPanel(); renderDock(); });
+    if (!ts.welcomeSeen) { showWelcome(); return; }
+    resume();
+  };
+  function resume() {
     if (!ts.introDone) { showIntro(0); return; }
     if (ts.mode === 'guided' && mod()) {
       let s = Math.min(ts.s, mod().steps.length - 1);
       while (s > 0 && mod().steps[s].transient) s--;
       enterStep(ts.m, s, { noPrepare: true });
     } else { ts.mode = 'free'; renderDock(); }
-  };
+  }
+
+  // ---------------- Welcome pop-up: voice + gamified experience by Biniac ----------------
+  let welcomeThenIntro = false;
+  function showWelcome(thenIntro) {
+    welcomeThenIntro = !!thenIntro;
+    hideBubble();
+    const old = layer().querySelector('.tour-intro'); if (old) old.remove();
+    const w = document.createElement('div'); w.className = 'tour-intro tour-welcome';
+    w.innerHTML = G().welcomeHTML();
+    layer().appendChild(w);
+    V().play('welcome:0');
+    updateVoiceUI(); renderDock();
+    setTimeout(() => { const b = w.querySelector('[data-t="welcome-go"]'); if (b) b.focus({ preventScroll: true }); }, 30);
+  }
+  function closeWelcome() {
+    ts.welcomeSeen = true; save();
+    const w = layer().querySelector('.tour-welcome'); if (w) w.remove();
+    if (welcomeThenIntro || !ts.introDone) showIntro(0); else resume();
+  }
 
   function buildLayer() {
     const L = layer();
@@ -154,6 +182,7 @@
     hideBubble();
     const slides = C().intro;
     const sl = slides[i];
+    const wl = layer().querySelector('.tour-welcome'); if (wl) wl.remove();
     let m = layer().querySelector('.tour-intro');
     if (!m) { m = document.createElement('div'); m.className = 'tour-intro'; layer().appendChild(m); }
     const last = i === slides.length - 1;
@@ -195,6 +224,7 @@
     const snaps = GH.storage.get(SNAPS) || {};
     if (opts.restore && snaps[m]) { GH.store.restore(snaps[m].state); }
     ts.mode = 'guided'; ts.m = m; ts.s = 0; save();
+    G().moduleStart(m);
     C().modules[m].prepare && C().modules[m].prepare();
     snaps[m] = { state: GH.store.snapshot(), hash: location.hash };
     GH.storage.set(SNAPS, snaps);
@@ -229,6 +259,7 @@
 
   function next() {
     const st = step(); if (!st) return;
+    G().stepDone(ts.m, ts.s, st);
     if (ts.s < mod().steps.length - 1) enterStep(ts.m, ts.s + 1); else completeModule();
   }
   tour.next = next;
@@ -240,21 +271,25 @@
     clearInterval(tick); tick = setInterval(position, 200);
     const M = C().modules[m];
     const nextM = C().modules[m + 1];
+    const res = G().moduleComplete(m);
+    const mission = (C().game && C().game.missions[m]) || { name: M.title };
     ts.s = M.steps.length; // "completed" pseudo-step
     hideRing();
     els.bubble.hidden = false;
     els.bubble.className = 'tour-bubble center done';
-    els.bubble.innerHTML = `<div class="tb-celebrate">${icon('check-circle-fill', 24)}</div>
-      <div class="tb-module flex">Módulo ${m + 1} de ${C().modules.length}<span class="flex-1"></span>${voiceBtn('done:' + M.id)}</div>
-      <h3 id="tb-title">¡Módulo completado!</h3><p class="tb-sub">${esc(M.title)}</p>
-      ${M.learn.length ? `<ul class="tb-learn">${M.learn.map(l => `<li>${icon('check', 16)}<span>${l}</span></li>`).join('')}</ul>` : ''}
+    els.bubble.innerHTML = `<div class="tb-celebrate">${icon('trophy', 24)}</div>
+      <div class="tb-module flex">Misión ${m + 1} de ${C().modules.length} · Módulo ${m + 1}<span class="flex-1"></span>${voiceBtn('done:' + M.id)}</div>
+      <h3 id="tb-title">¡Misión cumplida!</h3><p class="tb-sub">${esc(mission.name)} · ${esc(M.title)}</p>
+      ${G().completionHTML(m, res)}
+      ${M.learn.length ? `<div class="tb-learn-h">Lo que aprendiste</div><ul class="tb-learn">${M.learn.map(l => `<li>${icon('check', 16)}<span>${l}</span></li>`).join('')}</ul>` : ''}
       <div class="tb-foot"><button class="btn btn-sm" data-t="repeat-module">${icon('sync')} Repetir módulo</button><span class="flex-1"></span>
       ${nextM ? `<button class="btn btn-primary btn-sm" data-t="next-module">Siguiente: ${esc(nextM.title)} ${icon('arrow-right')}</button>` : `<button class="btn btn-primary btn-sm" data-t="free">Explorar libremente</button>`}</div>`;
     els.bubble.style.left = ''; els.bubble.style.top = '';
     linkify(els.bubble.querySelector('.tb-learn'));
     els.live.textContent = `Módulo ${m + 1} completado`;
     renderDock();
-    if (V().has('done:' + M.id)) V().play('done:' + M.id); else V().say('cheer');
+    const grad = res.badges.some(b => b.id === 'b-grad');
+    if (grad && V().has('grad:0')) V().play('grad:0'); else if (V().has('done:' + M.id)) V().play('done:' + M.id); else if (V().has('badge:0')) V().play('badge:0'); else V().say('cheer');
     updateVoiceUI();
     GH.bus.emit('tour:module-complete', m);
   }
@@ -290,19 +325,22 @@
   tour.restartAll = function () {
     confirmBox('¿Reiniciar todo?', 'Se borrarán tus repositorios de práctica y tu progreso, y volverás a la bienvenida.', 'Sí, reiniciar', () => {
       GH.storage.del(KEY); GH.storage.del(SNAPS); GH.storage.del('ghsim:state:v1');
-      stepSnaps = {}; clearInterval(tick); V().stop();
+      stepSnaps = {}; clearInterval(tick); V().stop(); G().reset();
+      layer().querySelectorAll('.tour-rewards').forEach(x => x.remove());
       closeAllOverlays(); closePanel();
       GH.store.reset();
       if (GH.resetNewRepoForm) GH.resetNewRepoForm();
       ts = defaults(); save();
       location.hash = '#/'; GH.render();
-      showIntro(0);
+      showWelcome();
     });
   };
   tour.goFree = function (tab) {
-    if (ts.mode === 'guided' && ts.m === C().modules.length - 1 && !ts.completed.includes(ts.m)) ts.completed.push(ts.m);
+    let fin = null;
+    if (ts.mode === 'guided' && ts.m === C().modules.length - 1 && !ts.completed.includes(ts.m)) { ts.completed.push(ts.m); save(); fin = G().moduleComplete(ts.m, { toast: true }); }
     ts.mode = 'free'; save();
     V().stop();
+    if (fin && fin.badges.some(b => b.id === 'b-grad') && V().has('grad:0')) V().play('grad:0');
     clearInterval(tick); hideBubble();
     renderDock();
     if (tab) openPanel(tab);
@@ -320,7 +358,8 @@
     const actions = (st.actions || []).map((a, k) => `<button class="btn btn-sm ${a.primary ? 'btn-primary' : ''}" data-t="action" data-k="${k}">${a.label}</button>`).join('');
     const auto = st.advance && st.advance.check && st.advance.auto;
     const cue = isNext ? '' : (st.cue || (st.advance === 'click' ? 'Haz clic en lo que tiene borde azul' : st.advance && st.advance.event === 'tour:term-opened' ? 'Haz clic en la palabra subrayada' : auto ? (/^(INPUT|TEXTAREA)$/.test((findTarget(st.target) || {}).tagName || '') ? 'Escribe en la casilla con borde azul' : 'Usa la zona con borde azul') : (st.actions && st.actions.length && !st.target) ? 'Usa el botón verde de este globo' : 'Sigue la instrucción 👉 para continuar'));
-    b.innerHTML = `<div class="tb-head"><span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="flex-1"><div class="tb-guide">Tu guía</div><div class="tb-module">Módulo ${ts.m + 1} · Paso ${ts.s + 1} de ${M.steps.length}</div></div>${voiceBtn(stepKey())}<button class="btn btn-invisible btn-sm btn-icon" data-t="minimize" aria-label="Minimizar el globo">${icon('dash')}</button></div>
+    b.innerHTML = `<div class="tb-head"><span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="flex-1"><div class="tb-guide">Tu guía</div><div class="tb-module">Misión ${ts.m + 1} · Paso ${ts.s + 1} de ${M.steps.length}${G().stepValue(ts.m, ts.s, st) ? ` · <span class="tb-pts">+${G().stepValue(ts.m, ts.s, st)} pts</span>` : ''}</div></div>${voiceBtn(stepKey())}<button class="btn btn-invisible btn-sm btn-icon" data-t="minimize" aria-label="Minimizar el globo">${icon('dash')}</button></div>
+      ${ts.s === 0 ? G().missionBanner(ts.m) : ''}
       <h3 id="tb-title">${st.title}</h3>
       <div class="tb-body">${val(st.body)}</div>
       <div class="tb-hint" hidden>${icon('light-bulb')}<span></span></div>
@@ -453,6 +492,7 @@
     const h = els.bubble.querySelector('.tb-hint');
     const b = els.bubble;
     if (b.classList.contains('minimized')) b.classList.remove('minimized');
+    G().hint(ts.m, ts.s);
     if (h) {
       h.hidden = false;
       h.querySelector('span').innerHTML = st.hint || (st.target ? 'Haz clic en el elemento resaltado en azul para continuar.' : 'Lee el mensaje y pulsa «Continuar» cuando estés listo.');
@@ -467,11 +507,13 @@
   // ---------------- Tour layer clicks ----------------
   function onLayerClick(e) {
     const term = e.target.closest('.tb-term');
-    if (term) { openPanel('glossary', term.getAttribute('data-term')); GH.bus.emit('tour:term-opened', term.getAttribute('data-term')); return; }
+    if (term) { openPanel('glossary', term.getAttribute('data-term')); G().term(term.getAttribute('data-term')); GH.bus.emit('tour:term-opened', term.getAttribute('data-term')); return; }
     const b = e.target.closest('[data-t]'); if (!b) return;
     const t = b.getAttribute('data-t');
     const st = step();
     switch (t) {
+      case 'welcome-go': closeWelcome(); break;
+      case 'welcome-voice': V().pauseOrResume('welcome:0'); break;
       case 'intro-next': showIntro(+layer().querySelector('.tour-intro').dataset.i + 1); break;
       case 'intro-prev': showIntro(+layer().querySelector('.tour-intro').dataset.i - 1); break;
       case 'intro-skip': showIntro(C().intro.length - 1); break;
@@ -492,7 +534,7 @@
       case 'continue-guided': closePanel(); if (ts.mode !== 'guided') { const m = firstIncomplete(); tour.startModule(m); } break;
       case 'go-free': tour.goFree(); closePanel(); break;
       case 'restart': tour.restartAll(); break;
-      case 'show-intro': closePanel(); showIntro(0); break;
+      case 'show-intro': closePanel(); showWelcome(true); break;
       case 'confirm-yes': { const fn = confirmFn; closeConfirm(); if (fn) fn(); break; }
       case 'confirm-no': closeConfirm(); break;
       case 'howto': tour.showHowTo(); break;
@@ -509,11 +551,11 @@
     const N = C().modules.length;
     if (!ts.introDone) { d.innerHTML = ''; d.hidden = true; return; }
     d.hidden = false;
-    const done = C().challenges.filter(c => { try { return c[2](); } catch (e) { return false; } }).length;
+    const done = G().state().challenges.length;
     if (ts.mode === 'guided') {
       const M = mod(); const total = M.steps.length; const s = Math.min(ts.s + 1, total);
-      d.innerHTML = `<div class="td-mods" aria-label="Progreso por módulos">${C().modules.map((x, i) => `<span class="${ts.completed.includes(i) ? 'done' : ''} ${i === ts.m ? 'cur' : ''}" title="Módulo ${i + 1}: ${esc(x.title)}"></span>`).join('')}</div>
-        <div class="td-info"><div class="td-title">Módulo ${ts.m + 1} de ${N} · ${esc(M.title)}</div><div class="td-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${s}" aria-label="Pasos del módulo"><i style="width:${(ts.s >= total ? 1 : s / total) * 100}%"></i></div></div>
+      d.innerHTML = `${G().hudHTML()}<div class="td-mods" aria-label="Progreso por módulos">${C().modules.map((x, i) => `<span class="${ts.completed.includes(i) ? 'done' : ''} ${i === ts.m ? 'cur' : ''}" title="Módulo ${i + 1}: ${esc(x.title)}"></span>`).join('')}</div>
+        <div class="td-info"><div class="td-title">Misión ${ts.m + 1} de ${N} · ${esc(M.title)}</div><div class="td-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${s}" aria-label="Pasos del módulo"><i style="width:${(ts.s >= total ? 1 : s / total) * 100}%"></i></div></div>
         <div class="td-btns"><button class="btn btn-sm btn-invisible td-b" data-t="back" title="Volver al paso anterior" aria-label="Paso anterior" ${ts.m === 0 && ts.s === 0 ? 'disabled' : ''}>${icon('arrow-left')}<span class="td-lbl">Atrás</span></button>
         <button class="btn btn-sm btn-invisible td-b" data-t="repeat-step" title="Empezar de nuevo este paso" aria-label="Repetir este paso">${icon('sync')}<span class="td-lbl">Repetir</span></button>
         <button class="btn btn-sm btn-invisible td-b" data-t="panel" data-tab="modules" title="Ver los 8 módulos" aria-label="Índice del recorrido">${icon('list-unordered')}<span class="td-lbl">Índice</span></button>
@@ -522,8 +564,8 @@
         <button class="btn btn-sm btn-invisible td-b td-voice" data-t="voice-toggle" aria-label="Voz de la guía" aria-pressed="true"></button>
         <button class="btn btn-sm" data-t="go-free" title="Salir del recorrido y navegar libremente">Explorar libre</button></div>`;
     } else {
-      d.innerHTML = `<span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="td-info"><div class="td-title">Exploración libre</div><div class="td-sub">${ts.completed.length} de ${N} módulos · ${done} de ${C().challenges.length} retos</div></div>
-        <div class="td-btns"><button class="btn btn-sm" data-t="panel" data-tab="challenges">${icon('goal')} Retos</button><button class="btn btn-sm" data-t="panel" data-tab="glossary">${icon('book')} Glosario</button><button class="btn btn-sm btn-invisible btn-icon" data-t="howto" title="Cómo usar el tutorial" aria-label="Ayuda: cómo usar el tutorial">${icon('question')}</button><button class="btn btn-sm btn-invisible td-b td-voice" data-t="voice-toggle" aria-label="Voz de la guía" aria-pressed="true"></button><button class="btn btn-sm btn-primary" data-t="panel" data-tab="modules">${icon('mortar-board')} Recorrido guiado</button></div>`;
+      d.innerHTML = `${G().hudHTML()}<div class="td-info"><div class="td-title">Exploración libre</div><div class="td-sub">${ts.completed.length} de ${N} misiones · ${done} de ${C().challenges.length} desafíos</div></div>
+        <div class="td-btns"><button class="btn btn-sm" data-t="panel" data-tab="challenges">${icon('trophy')} Logros</button><button class="btn btn-sm" data-t="panel" data-tab="glossary">${icon('book')} Glosario</button><button class="btn btn-sm btn-invisible btn-icon" data-t="howto" title="Cómo usar el tutorial" aria-label="Ayuda: cómo usar el tutorial">${icon('question')}</button><button class="btn btn-sm btn-invisible td-b td-voice" data-t="voice-toggle" aria-label="Voz de la guía" aria-pressed="true"></button><button class="btn btn-sm btn-primary" data-t="panel" data-tab="modules">${icon('mortar-board')} Recorrido guiado</button></div>`;
     }
   }
 
@@ -539,12 +581,12 @@
   tour.closePanel = closePanel;
   function renderPanel() {
     const tab = ts.panelTab;
-    const tabs = [['modules', 'mortar-board', 'Recorrido'], ['glossary', 'book', 'Glosario'], ['challenges', 'goal', 'Retos'], ['settings', 'gear', 'Ajustes']];
+    const tabs = [['modules', 'mortar-board', 'Recorrido'], ['challenges', 'trophy', 'Logros'], ['glossary', 'book', 'Glosario'], ['settings', 'gear', 'Ajustes']];
     let body = '';
     if (tab === 'modules') {
-      body = `<p class="muted mb-3">Ocho módulos cortos. Puedes hacerlos en orden o empezar por el que necesites.</p><div class="tp-mods">${C().modules.map((m, i) => {
+      body = `<p class="muted mb-3">Ocho misiones cortas. Puedes hacerlas en orden o empezar por la que necesites. Cada paso te da puntos.</p><div class="tp-mods">${C().modules.map((m, i) => {
         const done = ts.completed.includes(i), cur = ts.mode === 'guided' && ts.m === i;
-        return `<div class="tp-mod ${done ? 'done' : ''} ${cur ? 'cur' : ''}"><span class="tp-ic">${done ? icon('check') : icon(m.icon)}</span><div class="flex-1"><div class="f6 muted">Módulo ${i + 1}</div><strong>${esc(m.title)}</strong>${cur ? '<div class="f6" style="color:var(--fgColor-accent)">En curso</div>' : ''}</div><button class="btn btn-sm ${!done && !cur ? 'btn-primary' : ''}" data-t="start-module" data-m="${i}">${done ? 'Repetir' : cur ? 'Reiniciar' : 'Empezar'}</button></div>`;
+        return `<div class="tp-mod ${done ? 'done' : ''} ${cur ? 'cur' : ''}"><span class="tp-ic">${done ? icon('check') : icon(m.icon)}</span><div class="flex-1"><div class="f6 muted">Misión ${i + 1}${C().game ? ' · ' + esc(C().game.missions[i].name) : ''}</div><strong>${esc(m.title)}</strong>${cur ? '<div class="f6" style="color:var(--fgColor-accent)">En curso</div>' : ''}</div><button class="btn btn-sm ${!done && !cur ? 'btn-primary' : ''}" data-t="start-module" data-m="${i}">${done ? 'Repetir' : cur ? 'Reiniciar' : 'Empezar'}</button></div>`;
       }).join('')}</div>
       <div class="flex gap-2 mt-3">${ts.mode !== 'guided' ? `<button class="btn btn-primary" data-t="continue-guided">Continuar el recorrido</button>` : `<button class="btn" data-t="go-free">Pasar a exploración libre</button>`}<button class="btn btn-invisible" data-t="howto">${icon('question')} Cómo usar el tutorial</button><button class="btn btn-invisible" data-t="show-intro">Ver la bienvenida</button></div>`;
     } else if (tab === 'glossary') {
@@ -552,7 +594,7 @@
       const list = C().glossary.slice().sort((a, b) => a.t.localeCompare(b.t, 'es', { sensitivity: 'base' }));
       body = `<p class="muted f6 mb-2">${list.length} términos. Las palabras subrayadas dentro de las definiciones también se pueden pulsar.</p><div class="input-wrap mb-3">${icon('search')}<input class="form-control" id="tp-gq" placeholder="Buscar un término…" aria-label="Buscar en el glosario"></div><dl class="tp-gloss">${list.map(g => `<div class="tp-term ${panelTerm === g.k ? 'hl' : ''}" id="term-${g.k}" data-key="${g.k}" data-k="${esc((g.t + ' ' + g.d + ' ' + g.a.join(' ')).toLowerCase())}"><dt>${g.t}</dt><dd>${g.d}</dd>${fs[g.k] != null ? `<div class="tp-where">${icon('mortar-board', 12)} Aparece desde el Módulo ${fs[g.k] + 1}: ${esc(C().modules[fs[g.k]].title)}</div>` : ''}</div>`).join('')}</dl>`;
     } else if (tab === 'challenges') {
-      body = `<p class="muted mb-3">Practica por tu cuenta. Cada reto se marca solo cuando lo logras.</p><ul class="tp-ch">${C().challenges.map(([t, d, f]) => { let ok = false; try { ok = f(); } catch (e) { /* */ } return `<li class="${ok ? 'ok' : ''}"><span class="tp-cb">${ok ? icon('check') : ''}</span><div><strong>${t}</strong><div class="muted f6">${d}</div></div></li>`; }).join('')}</ul>`;
+      body = G().panelHTML();
     } else {
       body = `<h4 class="mb-2">Tus datos</h4><p class="muted f6 mb-3">Todo lo que haces se guarda solo en este navegador. Nada se envía a internet ni a GitHub.</p>
         <h4 class="mb-2">Empezar de cero</h4><p class="muted f6 mb-2">Borra tus repositorios de práctica y tu progreso.</p><button class="btn btn-danger" data-t="restart">${icon('sync')} Reiniciar todo</button>
