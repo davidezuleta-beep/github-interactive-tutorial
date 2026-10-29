@@ -329,9 +329,15 @@
   // ---------------- Click guard (guided mode) ----------------
   function onClickCapture(e) {
     if (ts.mode !== 'guided') return;
-    const st = step(); if (!st) return;
+    let st = step(); if (!st) return;
     const t = e.target; if (!t || !t.closest) return;
     if (t.closest('#tour-layer')) return;
+    // If an auto-advancing step is already satisfied, move on now so a quick click on the next target isn't blocked.
+    if (st.advance && st.advance.check && st.advance.auto) {
+      let done = false; try { done = !!st.advance.check(C().ctx); } catch (err) { /* */ }
+      const own = st.click || st.target;
+      if (done && !(own && t.closest(own))) { next(); st = step(); if (!st) return; }
+    }
     if (st.allow === '*') { checkClickAdvance(t, st); return; }
     const clickSel = st.click || st.target;
     if (clickSel && t.closest(clickSel)) { checkClickAdvance(t, st); return; }
