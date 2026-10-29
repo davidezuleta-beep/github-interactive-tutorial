@@ -10,7 +10,7 @@ Simulador educativo para que personas sin conocimientos técnicos aprendan a usa
 - **8 módulos guiados** (108 pasos): Dashboard, repositorios, explorar un proyecto, subir archivos y commits, ramas, pull requests y merge, seguridad y administración, y exploración libre.
 - **Globos contextuales** con resaltado del elemento, **pistas** cuando se hace clic en el lugar equivocado, y botones **Atrás**, **Repetir paso**, **Repetir módulo** y **Reiniciar todo**.
 - **Glosario de 44 términos** enlazado automáticamente: cada palabra nueva se puede pulsar para ver su significado.
-- **Narración con voz** (ElevenLabs): la guía habla en la bienvenida y en cada paso de los módulos 1 a 3, da pistas en voz alta y felicita al terminar. Se puede pausar, repetir o apagar con el botón **Voz**.
+- **Narración con voz** (ElevenLabs): la guía habla en la bienvenida y en cada paso de los 8 módulos (130 audios), da pistas en voz alta y felicita al terminar. Se puede pausar, repetir o apagar con el botón **Voz**.
 - **Experiencia gamificada diseñada por Biniac**: al entrar, una ventana explica que hay **voz** y que es un **juego** con puntos, misiones (narrativa), niveles, insignias, desafíos y un premio final.
 - **Exploración libre** con 7 **retos** que se marcan solos, glosario y acceso al índice de módulos.
 - **Simulación funcional**: crear repositorios, subir archivos (de ejemplo o propios, que nunca salen del equipo), editar archivos, commits e historial, ver versiones antiguas, ramas, comparar, pull requests, merge, borrar ramas, issues, comentarios, estrellas, forks, cambiar visibilidad, renombrar, invitar colaboradores y roles.
