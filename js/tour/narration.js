@@ -81,7 +81,13 @@
     ['cheer:1', 'cheer-1', '¡Perfecto, así se hace!'],
     ['cheer:2', 'cheer-2', '¡Excelente, sigamos!']
   ];
+  // Audios ya grabados y guardados en audio/. Solo estos pasos muestran el botón de voz;
+  // los demás funcionan con texto. Al agregar un MP3 nuevo, añade aquí su nombre de archivo.
+  const ready = new Set([
+    'intro-0', 'intro-1', 'intro-2', 'intro-3',
+    'm1-01', 'm1-02', 'm1-03', 'm1-04', 'm1-05', 'm1-06', 'm1-07', 'm1-08'
+  ]);
   const map = {};
-  lines.forEach(([key, file, text]) => { map[key] = { file, text, src: 'audio/' + file + '.mp3' }; });
-  GH.narration = { lines, map, voice: { name: 'Mariana', voice_id: 'GUeHs6BPO7Btpp3ZjcQH', model: 'eleven_v4' } };
+  lines.forEach(([key, file, text]) => { map[key] = { file, text, src: 'audio/' + file + '.mp3', ready: ready.has(file) }; });
+  GH.narration = { lines, map, ready, voice: { name: 'Mariana', voice_id: 'GUeHs6BPO7Btpp3ZjcQH', model: 'eleven_v4' } };
 })(window.GH);

@@ -28,6 +28,9 @@ js/router.js            Navegación por #/rutas
 js/views-*.js           Pantallas (inicio, código, historial, pull requests, configuración…)
 js/tour/content.js      ✏️ TEXTOS DEL RECORRIDO: bienvenida, módulos, pasos, glosario y retos
 js/tour/engine.js       Motor del recorrido
+js/tour/narration.js    🔊 GUIONES DE VOZ y lista de audios disponibles
+js/tour/voice.js        Reproductor de la voz
+audio/                  Audios MP3 de la narración (ElevenLabs)
 ```
 
 ## Cómo actualizar o ampliar el tutorial
@@ -56,6 +59,8 @@ Para resaltar un elemento nuevo, agrégale `data-tour="nombre"` en la vista corr
 **Glosario.** Cada entrada de `glossary` es `{ k: 'clave', t: 'Término', d: 'Definición', a: ['variantes', 'que se enlazan'] }`. Todas las variantes (`a`) se convierten automáticamente en enlaces (subrayado punteado) en los globos, los resúmenes, los retos y las definiciones del propio glosario. Una variante con mayúsculas solo se enlaza si coincide exactamente (por ejemplo `PR`, `Settings`); en minúsculas, sin importar mayúsculas. El glosario indica solo en qué módulo aparece cada término por primera vez.
 
 **Instrucciones de uso.** El texto «Cómo usar este tutorial» (diapositiva de bienvenida y botón **Ayuda** de la barra) está en la constante `howTo` de `js/tour/content.js`.
+
+**Narración con voz.** La guía habla con voces de ElevenLabs (voz *Mariana*, `voice_id` `GUeHs6BPO7Btpp3ZjcQH`, modelo `eleven_v4`). Los guiones están en `js/tour/narration.js`: cada línea es `[clave, archivo, texto]`, donde la clave es `'<id del módulo>:<título exacto del paso>'` (o `intro:N`, `done:<módulo>`, `hint:N`, `cheer:N`). El audio va en `audio/<archivo>.mp3`. Para activar un audio nuevo: genera el MP3 con el mismo texto y la misma voz, guárdalo en `audio/` y añade su nombre de archivo a la lista `ready` de `narration.js`. Los pasos sin audio funcionan solo con texto y no muestran el botón de voz. Si cambias el título de un paso, actualiza también su clave en `narration.js`. La persona puede apagar la voz con el botón **Voz** de la barra (se recuerda en su navegador).
 
 **Retos.** Edita `challenges` (`[título, descripción, función que devuelve true cuando se cumple]`).
 

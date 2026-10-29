@@ -158,7 +158,7 @@
     if (!m) { m = document.createElement('div'); m.className = 'tour-intro'; layer().appendChild(m); }
     const last = i === slides.length - 1;
     m.innerHTML = `<div class="ti-card" role="dialog" aria-modal="true" aria-labelledby="ti-title">
-      <div class="ti-top"><span class="ti-badge">${icon(sl.icon, 24)}</span><span class="flex-1"></span>${GH.narration && GH.narration.map['intro:' + i] ? `<span class="ti-voice">${voiceBtn('intro:' + i, 'ti-vbtn')}<button class="btn btn-sm btn-invisible td-b" data-t="voice-toggle" aria-pressed="true"></button></span>` : ''}<span class="ti-step">${i + 1} / ${slides.length}</span></div>
+      <div class="ti-top"><span class="ti-badge">${icon(sl.icon, 24)}</span><span class="flex-1"></span>${V().has('intro:' + i) ? `<span class="ti-voice">${voiceBtn('intro:' + i, 'ti-vbtn')}<button class="btn btn-sm btn-invisible td-b" data-t="voice-toggle" aria-pressed="true"></button></span>` : ''}<span class="ti-step">${i + 1} / ${slides.length}</span></div>
       <h2 id="ti-title">${sl.title}</h2><div class="ti-body">${sl.body}</div>
       <div class="ti-foot"><div class="ti-dots">${slides.map((_, k) => `<span class="${k === i ? 'on' : ''}"></span>`).join('')}</div><span class="flex-1"></span>
         ${i > 0 ? `<button class="btn" data-t="intro-prev">Atrás</button>` : `<button class="btn btn-invisible" data-t="intro-skip">Saltar la bienvenida</button>`}

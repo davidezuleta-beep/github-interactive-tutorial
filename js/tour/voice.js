@@ -11,7 +11,7 @@
 
   const voice = GH.voice = {
     isEnabled: () => enabled,
-    has: (key) => !!N().map[key] && !failed.has(key),
+    has: (key) => { const n = N().map[key]; return !!n && n.ready !== false && !failed.has(key); },
     current: () => current,
     speaking: () => !!current && !audio.paused && !audio.ended,
     blocked: () => blocked,
@@ -26,7 +26,7 @@
       opts = opts || {};
       if (!enabled && !opts.force) return false;
       const n = N().map[key];
-      if (!n || failed.has(key)) { if (!opts.keep) voice.stop(); return false; }
+      if (!voice.has(key)) { if (!opts.keep) voice.stop(); return false; }
       if (opts.force && !enabled) voice.setEnabled(true);
       current = key;
       try { audio.pause(); } catch (e) { /* */ }
@@ -44,7 +44,7 @@
     say(group) {
       if (!enabled) return;
       const now = Date.now(); if (now - lastHint < 4000) return;
-      const keys = Object.keys(N().map).filter(k => k.startsWith(group + ':') && !failed.has(k));
+      const keys = Object.keys(N().map).filter(k => k.startsWith(group + ':') && voice.has(k));
       if (!keys.length) return;
       lastHint = now;
       voice.play(keys[Math.floor(Math.random() * keys.length)]);
