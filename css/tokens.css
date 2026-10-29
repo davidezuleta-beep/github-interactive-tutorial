@@ -1,0 +1,73 @@
+/* Design tokens — values taken from GitHub Primer Primitives (dark theme, MIT License). */
+:root {
+  color-scheme: dark;
+  --bgColor-default: #0d1117;
+  --bgColor-muted: #151b23;
+  --bgColor-inset: #010409;
+  --bgColor-emphasis: #3d444d;
+  --bgColor-accent-emphasis: #1f6feb;
+  --bgColor-accent-muted: #388bfd1a;
+  --bgColor-success-emphasis: #238636;
+  --bgColor-success-muted: #2ea04326;
+  --bgColor-danger-emphasis: #da3633;
+  --bgColor-danger-muted: #f851491a;
+  --bgColor-attention-muted: #bb800926;
+  --bgColor-done-emphasis: #8957e5;
+  --bgColor-done-muted: #ab7df826;
+  --bgColor-neutral-muted: #656c7633;
+  --bgColor-neutral-emphasis: #656c76;
+
+  --fgColor-default: #f0f6fc;
+  --fgColor-muted: #9198a1;
+  --fgColor-accent: #4493f8;
+  --fgColor-success: #3fb950;
+  --fgColor-danger: #f85149;
+  --fgColor-attention: #d29922;
+  --fgColor-done: #ab7df8;
+  --fgColor-onEmphasis: #ffffff;
+
+  --borderColor-default: #3d444d;
+  --borderColor-muted: #3d444db3;
+  --borderColor-accent-emphasis: #1f6feb;
+  --borderColor-success-emphasis: #238636;
+  --borderColor-danger-emphasis: #da3633;
+  --borderColor-attention-emphasis: #9e6a03;
+  --borderColor-done-emphasis: #8957e5;
+  --borderColor-translucent: #ffffff26;
+
+  --control-bgColor-rest: #212830;
+  --control-bgColor-hover: #262c36;
+  --control-bgColor-active: #2a313c;
+  --control-transparent-bgColor-hover: #656c7633;
+  --control-transparent-bgColor-selected: #656c761a;
+  --button-primary-bgColor-rest: #238636;
+  --button-primary-bgColor-hover: #29903b;
+  --button-primary-bgColor-active: #2e9a40;
+  --button-primary-borderColor-rest: #ffffff1a;
+  --button-danger-fgColor-rest: #fa5e55;
+  --button-danger-bgColor-hover: #b62324;
+
+  --overlay-bgColor: #010409;
+  --overlay-backdrop: #01040999;
+  --selectMenu-bgColor-active: #0c2d6b;
+  --underlineNav-borderColor-active: #f78166;
+  --focus-outlineColor: #1f6feb;
+
+  --diff-addLine: #2ea04326;
+  --diff-addNum: #3fb9504d;
+  --diff-addWord: #2ea04366;
+  --diff-delLine: #f851491a;
+  --diff-delNum: #f851494d;
+  --diff-hunk: #388bfd1a;
+  --diff-hunkNum: #388bfd66;
+
+  --shadow-resting-small: 0px 1px 1px 0px #01040999, 0px 1px 3px 0px #01040999;
+  --shadow-floating-small: 0px 0px 0px 1px #3d444d, 0px 6px 12px -3px #01040966, 0px 6px 18px 0px #01040966;
+  --shadow-floating-large: 0px 0px 0px 1px #3d444d, 0px 24px 48px 0px #010409;
+
+  --fontStack-sansSerif: "Mona Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --fontStack-monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --borderRadius-small: 3px;
+  --borderRadius-medium: 6px;
+  --borderRadius-large: 12px;
+}

@@ -1,0 +1,76 @@
+# Simulador interactivo de GitHub
+
+Simulador educativo para que personas sin conocimientos técnicos aprendan a usar GitHub **sin cuenta, sin contraseñas y sin riesgos**. Reproduce la interfaz de GitHub y la acompaña con un recorrido guiado en español.
+
+> Simulador educativo independiente. No está afiliado a GitHub, Inc. Todo ocurre en el navegador de la persona: no hay backend, base de datos ni conexión con repositorios reales.
+
+## Qué incluye
+
+- **Bienvenida** amable: qué es GitHub, para qué sirve y cómo funciona el simulador (con nombre personalizable).
+- **8 módulos guiados** (≈ 100 pasos): Dashboard, repositorios, explorar un proyecto, subir archivos y commits, ramas, pull requests y merge, seguridad y administración, y exploración libre.
+- **Globos contextuales** con resaltado del elemento, **pistas** cuando se hace clic en el lugar equivocado, y botones **Atrás**, **Repetir paso**, **Repetir módulo** y **Reiniciar todo**.
+- **Exploración libre** con 7 **retos** que se marcan solos, **glosario** y acceso al índice de módulos.
+- **Simulación funcional**: crear repositorios, subir archivos (de ejemplo o propios, que nunca salen del equipo), editar archivos, commits e historial, ver versiones antiguas, ramas, comparar, pull requests, merge, borrar ramas, issues, comentarios, estrellas, forks, cambiar visibilidad, renombrar, invitar colaboradores y roles.
+
+## Estructura
+
+```
+index.html              Página única
+css/tokens.css          Colores y tipografía (Primer Primitives, tema oscuro)
+css/github.css          Componentes con aspecto de GitHub
+css/tour.css            Capa educativa (globos, barra de progreso, panel, bienvenida)
+js/icons.js             Subconjunto de Octicons (licencia MIT)
+js/util.js              Utilidades: eventos, Markdown, diffs, fechas, almacenamiento
+js/store.js             Datos simulados (repositorios, ramas, commits, PR…) y datos de ejemplo
+js/ui.js                Encabezado, menús, diálogos, buscador, avisos
+js/router.js            Navegación por #/rutas
+js/views-*.js           Pantallas (inicio, código, historial, pull requests, configuración…)
+js/tour/content.js      ✏️ TEXTOS DEL RECORRIDO: bienvenida, módulos, pasos, glosario y retos
+js/tour/engine.js       Motor del recorrido
+```
+
+## Cómo actualizar o ampliar el tutorial
+
+**Cambiar textos.** Todo el contenido educativo está en `js/tour/content.js`. Edita `title` y `body` de cualquier paso; el HTML básico está permitido (`<strong>`, `<code>`, `<br>`).
+
+**Agregar un paso.** Inserta un objeto en el arreglo `steps` del módulo:
+
+```js
+{
+  title: 'Abre la pestaña Issues',
+  target: T('tab-issues'),            // elemento con data-tour="tab-issues"
+  body: '👉 Haz clic en <strong>Issues</strong>.',
+  advance: 'click',                   // 'next' | 'click' | { event } | { route } | { check, auto }
+  route: /\/issues$/,                 // opcional: también avanza si la dirección coincide
+  hint: 'La pestaña Issues está junto a Code.'
+}
+```
+
+Para resaltar un elemento nuevo, agrégale `data-tour="nombre"` en la vista correspondiente (`js/views-*.js`) y úsalo con `T('nombre')`. Los eventos disponibles para `advance: { event }` incluyen: `repo:created`, `commit:created`, `branch:created`, `branch:deleted`, `pr:created`, `pr:merged`, `issue:created`, `repo:visibility`, `collaborator:added`, `upload:files-added`, `copied`, `palette:closed`, `drawer:closed`.
+
+**Agregar un módulo.** Añade un objeto a `modules` con `id`, `title`, `icon`, `learn` (resumen final), `prepare()` (deja la pantalla lista; usa `ensureRepo()` o `ensureBranchWithChange()` para crear lo necesario) y `steps`.
+
+**Glosario y retos.** Edita los arreglos `glossary` (`[clave, término, definición]`) y `challenges` (`[título, descripción, función que devuelve true cuando se cumple]`).
+
+**Datos de ejemplo.** El recetario de la comunidad y los demás datos ficticios se definen en la función `seed()` de `js/store.js`.
+
+## Probar localmente
+
+Es un sitio estático: abre `index.html` directamente o sírvelo con cualquier servidor, por ejemplo:
+
+```
+python3 -m http.server 8000
+```
+
+El progreso se guarda en el `localStorage` del navegador. Desde el panel de ayuda (**Ajustes → Reiniciar todo**) se vuelve al estado inicial.
+
+## Publicación
+
+El sitio se publica con GitHub Pages desde la rama `main` (carpeta raíz). Cualquier cambio que se suba a `main` se publica automáticamente en uno o dos minutos.
+
+## Créditos y licencias
+
+- Iconos: [Octicons](https://github.com/primer/octicons) — MIT License, © GitHub Inc. (ver `OCTICONS-LICENSE.txt`).
+- Colores: [Primer Primitives](https://github.com/primer/primitives) — MIT License.
+- Tipografía: Mona Sans (SIL Open Font License), servida por Google Fonts, con tipografías del sistema como respaldo.
+- Todos los usuarios, organizaciones y proyectos del simulador son ficticios.
