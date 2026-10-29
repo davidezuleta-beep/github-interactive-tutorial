@@ -18,6 +18,35 @@
   const mod = () => C().modules[ts.m];
   const step = () => ts.mode === 'guided' && mod() ? mod().steps[ts.s] : null;
   const val = (v) => (typeof v === 'function' ? v(C().ctx) : v);
+  const V = () => GH.voice || { play() {}, stop() {}, say() {}, has: () => false, isEnabled: () => false, speaking: () => false, current: () => null };
+  const stepKey = () => { const st = step(); return st ? mod().id + ':' + st.title : null; };
+  function voiceKeyNow() {
+    if (layer() && layer().querySelector('.tour-intro')) return 'intro:' + layer().querySelector('.tour-intro').dataset.i;
+    if (ts && ts.mode === 'guided' && mod() && ts.s >= mod().steps.length) return V().has('done:' + mod().id) ? 'done:' + mod().id : null;
+    return stepKey();
+  }
+  function voiceBtn(key, cls) {
+    if (!key || !V().has(key)) return '';
+    const on = V().current() === key && V().speaking();
+    return `<button class="btn btn-invisible btn-sm tb-voice ${cls || ''} ${on ? 'speaking' : ''}" data-t="voice-replay" data-key="${esc(key)}" aria-label="${on ? 'Pausar la voz' : 'Escuchar a la guía'}" title="${on ? 'Pausar' : 'Escuchar'}"><span class="vb"><i></i><i></i><i></i></span>${icon(on ? 'unmute' : 'play')}</button>`;
+  }
+  function updateVoiceUI() {
+    if (!els.bubble) return;
+    const key = voiceKeyNow();
+    document.querySelectorAll('#tour-layer [data-t="voice-replay"]').forEach(b => {
+      const k = b.getAttribute('data-key'); const on = V().current() === k && V().speaking();
+      b.classList.toggle('speaking', on);
+      b.innerHTML = `<span class="vb"><i></i><i></i><i></i></span>${icon(on ? 'unmute' : 'play')}`;
+      b.setAttribute('aria-label', on ? 'Pausar la voz' : 'Escuchar a la guía');
+    });
+    els.bubble.classList.toggle('is-speaking', !!key && V().current() === key && V().speaking());
+    document.querySelectorAll('#tour-layer [data-t="voice-toggle"]').forEach(b => {
+      const on = V().isEnabled();
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.innerHTML = `${icon(on ? 'unmute' : 'mute')}<span class="td-lbl">${on ? 'Voz' : 'Sin voz'}</span>`;
+      b.title = on ? 'Apagar la voz de la guía' : 'Encender la voz de la guía';
+    });
+  }
   function findTarget(sel) {
     if (!sel) return null;
     const list = document.querySelectorAll(sel);
@@ -92,6 +121,7 @@
       if ((rt.view === 'code' || rt.view === 'blob') && rt.repo && rt.branch && !rt.repo.branches[rt.branch]) { GH.store.state.tutorial.timeTravel = true; GH.store.save(); }
       fillDynamic();
     });
+    GH.bus.on('voice:state', updateVoiceUI);
     GH.bus.on('state:changed', () => { if (els.panel && els.panel.classList.contains('open') && ts.panelTab === 'challenges') renderPanel(); renderDock(); });
     if (!ts.introDone) { showIntro(0); return; }
     if (ts.mode === 'guided' && mod()) {
@@ -128,13 +158,15 @@
     if (!m) { m = document.createElement('div'); m.className = 'tour-intro'; layer().appendChild(m); }
     const last = i === slides.length - 1;
     m.innerHTML = `<div class="ti-card" role="dialog" aria-modal="true" aria-labelledby="ti-title">
-      <div class="ti-top"><span class="ti-badge">${icon(sl.icon, 24)}</span><span class="ti-step">${i + 1} / ${slides.length}</span></div>
+      <div class="ti-top"><span class="ti-badge">${icon(sl.icon, 24)}</span><span class="flex-1"></span>${GH.narration && GH.narration.map['intro:' + i] ? `<span class="ti-voice">${voiceBtn('intro:' + i, 'ti-vbtn')}<button class="btn btn-sm btn-invisible td-b" data-t="voice-toggle" aria-pressed="true"></button></span>` : ''}<span class="ti-step">${i + 1} / ${slides.length}</span></div>
       <h2 id="ti-title">${sl.title}</h2><div class="ti-body">${sl.body}</div>
       <div class="ti-foot"><div class="ti-dots">${slides.map((_, k) => `<span class="${k === i ? 'on' : ''}"></span>`).join('')}</div><span class="flex-1"></span>
         ${i > 0 ? `<button class="btn" data-t="intro-prev">Atrás</button>` : `<button class="btn btn-invisible" data-t="intro-skip">Saltar la bienvenida</button>`}
         ${last ? `<button class="btn" data-t="intro-free">Explorar por mi cuenta</button><button class="btn btn-primary" data-t="intro-start">Empezar el recorrido guiado ${icon('arrow-right')}</button>` : `<button class="btn btn-primary" data-t="intro-next">Siguiente ${icon('arrow-right')}</button>`}
       </div></div>`;
     m.dataset.i = i;
+    V().play('intro:' + i);
+    updateVoiceUI();
     const inp = m.querySelector('#intro-name');
     if (inp) {
       inp.value = ts.pendingName || '';
@@ -182,6 +214,8 @@
     if (!opts.keepSnap) stepSnaps[m + ':' + s] = { state: GH.store.snapshot(), hash: location.hash };
     renderBubble();
     renderDock();
+    if (!opts.silent) V().play(stepKey());
+    updateVoiceUI();
     els.live.textContent = `Módulo ${m + 1}, paso ${s + 1}: ${st.title}`;
     clearInterval(tick); tick = setInterval(() => { position(); evaluateCheck(); }, 150);
     setTimeout(() => { position(); evaluateCheck(); focusForStep(st); }, 80);
@@ -211,7 +245,7 @@
     els.bubble.hidden = false;
     els.bubble.className = 'tour-bubble center done';
     els.bubble.innerHTML = `<div class="tb-celebrate">${icon('check-circle-fill', 24)}</div>
-      <div class="tb-module">Módulo ${m + 1} de ${C().modules.length}</div>
+      <div class="tb-module flex">Módulo ${m + 1} de ${C().modules.length}<span class="flex-1"></span>${voiceBtn('done:' + M.id)}</div>
       <h3 id="tb-title">¡Módulo completado!</h3><p class="tb-sub">${esc(M.title)}</p>
       ${M.learn.length ? `<ul class="tb-learn">${M.learn.map(l => `<li>${icon('check', 16)}<span>${l}</span></li>`).join('')}</ul>` : ''}
       <div class="tb-foot"><button class="btn btn-sm" data-t="repeat-module">${icon('sync')} Repetir módulo</button><span class="flex-1"></span>
@@ -220,6 +254,8 @@
     linkify(els.bubble.querySelector('.tb-learn'));
     els.live.textContent = `Módulo ${m + 1} completado`;
     renderDock();
+    if (V().has('done:' + M.id)) V().play('done:' + M.id); else V().say('cheer');
+    updateVoiceUI();
     GH.bus.emit('tour:module-complete', m);
   }
 
@@ -254,7 +290,7 @@
   tour.restartAll = function () {
     confirmBox('¿Reiniciar todo?', 'Se borrarán tus repositorios de práctica y tu progreso, y volverás a la bienvenida.', 'Sí, reiniciar', () => {
       GH.storage.del(KEY); GH.storage.del(SNAPS); GH.storage.del('ghsim:state:v1');
-      stepSnaps = {}; clearInterval(tick);
+      stepSnaps = {}; clearInterval(tick); V().stop();
       closeAllOverlays(); closePanel();
       GH.store.reset();
       if (GH.resetNewRepoForm) GH.resetNewRepoForm();
@@ -266,6 +302,7 @@
   tour.goFree = function (tab) {
     if (ts.mode === 'guided' && ts.m === C().modules.length - 1 && !ts.completed.includes(ts.m)) ts.completed.push(ts.m);
     ts.mode = 'free'; save();
+    V().stop();
     clearInterval(tick); hideBubble();
     renderDock();
     if (tab) openPanel(tab);
@@ -283,7 +320,7 @@
     const actions = (st.actions || []).map((a, k) => `<button class="btn btn-sm ${a.primary ? 'btn-primary' : ''}" data-t="action" data-k="${k}">${a.label}</button>`).join('');
     const auto = st.advance && st.advance.check && st.advance.auto;
     const cue = isNext ? '' : (st.cue || (st.advance === 'click' ? 'Haz clic en lo que tiene borde azul' : st.advance && st.advance.event === 'tour:term-opened' ? 'Haz clic en la palabra subrayada' : auto ? (/^(INPUT|TEXTAREA)$/.test((findTarget(st.target) || {}).tagName || '') ? 'Escribe en la casilla con borde azul' : 'Usa la zona con borde azul') : (st.actions && st.actions.length && !st.target) ? 'Usa el botón verde de este globo' : 'Sigue la instrucción 👉 para continuar'));
-    b.innerHTML = `<div class="tb-head"><span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="flex-1"><div class="tb-guide">Tu guía</div><div class="tb-module">Módulo ${ts.m + 1} · Paso ${ts.s + 1} de ${M.steps.length}</div></div><button class="btn btn-invisible btn-sm btn-icon" data-t="minimize" aria-label="Minimizar el globo">${icon('dash')}</button></div>
+    b.innerHTML = `<div class="tb-head"><span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="flex-1"><div class="tb-guide">Tu guía</div><div class="tb-module">Módulo ${ts.m + 1} · Paso ${ts.s + 1} de ${M.steps.length}</div></div>${voiceBtn(stepKey())}<button class="btn btn-invisible btn-sm btn-icon" data-t="minimize" aria-label="Minimizar el globo">${icon('dash')}</button></div>
       <h3 id="tb-title">${st.title}</h3>
       <div class="tb-body">${val(st.body)}</div>
       <div class="tb-hint" hidden>${icon('light-bulb')}<span></span></div>
@@ -420,6 +457,7 @@
       h.hidden = false;
       h.querySelector('span').innerHTML = st.hint || (st.target ? 'Haz clic en el elemento resaltado en azul para continuar.' : 'Lee el mensaje y pulsa «Continuar» cuando estés listo.');
     }
+    if (!V().speaking() || (V().current() || '').startsWith('hint:') === false) V().say('hint');
     b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
     els.ring.classList.remove('flash'); void els.ring.offsetWidth; els.ring.classList.add('flash');
     lastRect = null; position();
@@ -458,6 +496,8 @@
       case 'confirm-yes': { const fn = confirmFn; closeConfirm(); if (fn) fn(); break; }
       case 'confirm-no': closeConfirm(); break;
       case 'howto': tour.showHowTo(); break;
+      case 'voice-toggle': { const on = V().toggle(); if (on) { const k = voiceKeyNow(); if (k) V().play(k); } updateVoiceUI(); break; }
+      case 'voice-replay': V().pauseOrResume(b.getAttribute('data-key')); break;
       case 'howto-close': { const h = layer().querySelector('.tour-howto'); if (h) h.remove(); break; }
     }
   }
@@ -479,12 +519,16 @@
         <button class="btn btn-sm btn-invisible td-b" data-t="panel" data-tab="modules" title="Ver los 8 módulos" aria-label="Índice del recorrido">${icon('list-unordered')}<span class="td-lbl">Índice</span></button>
         <button class="btn btn-sm btn-invisible td-b" data-t="panel" data-tab="glossary" title="Significado de las palabras nuevas" aria-label="Glosario">${icon('book')}<span class="td-lbl">Glosario</span></button>
         <button class="btn btn-sm btn-invisible td-b" data-t="howto" title="Cómo usar el tutorial" aria-label="Ayuda: cómo usar el tutorial">${icon('question')}<span class="td-lbl">Ayuda</span></button>
+        <button class="btn btn-sm btn-invisible td-b td-voice" data-t="voice-toggle" aria-label="Voz de la guía" aria-pressed="true"></button>
         <button class="btn btn-sm" data-t="go-free" title="Salir del recorrido y navegar libremente">Explorar libre</button></div>`;
     } else {
       d.innerHTML = `<span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="td-info"><div class="td-title">Exploración libre</div><div class="td-sub">${ts.completed.length} de ${N} módulos · ${done} de ${C().challenges.length} retos</div></div>
-        <div class="td-btns"><button class="btn btn-sm" data-t="panel" data-tab="challenges">${icon('goal')} Retos</button><button class="btn btn-sm" data-t="panel" data-tab="glossary">${icon('book')} Glosario</button><button class="btn btn-sm btn-invisible btn-icon" data-t="howto" title="Cómo usar el tutorial" aria-label="Ayuda: cómo usar el tutorial">${icon('question')}</button><button class="btn btn-sm btn-primary" data-t="panel" data-tab="modules">${icon('mortar-board')} Recorrido guiado</button></div>`;
+        <div class="td-btns"><button class="btn btn-sm" data-t="panel" data-tab="challenges">${icon('goal')} Retos</button><button class="btn btn-sm" data-t="panel" data-tab="glossary">${icon('book')} Glosario</button><button class="btn btn-sm btn-invisible btn-icon" data-t="howto" title="Cómo usar el tutorial" aria-label="Ayuda: cómo usar el tutorial">${icon('question')}</button><button class="btn btn-sm btn-invisible td-b td-voice" data-t="voice-toggle" aria-label="Voz de la guía" aria-pressed="true"></button><button class="btn btn-sm btn-primary" data-t="panel" data-tab="modules">${icon('mortar-board')} Recorrido guiado</button></div>`;
     }
   }
+
+  const _renderDock = renderDock;
+  renderDock = function () { _renderDock(); updateVoiceUI(); };
 
   // ---------------- Panel ----------------
   let panelTerm = null;
