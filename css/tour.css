@@ -84,7 +84,7 @@
 
 /* Panel */
 .tour-panel {
-  position: fixed; top: 0; right: 0; bottom: 0; width: 400px; max-width: 100vw; z-index: 1700;
+  position: fixed; top: 0; right: 0; bottom: 0; width: 400px; max-width: 100vw; z-index: 1740;
   background: #0d1117; border-left: 1px solid var(--borderColor-default); box-shadow: -16px 0 40px #010409aa;
   transform: translateX(105%); transition: transform .22s cubic-bezier(.33,1,.68,1); display: flex; flex-direction: column;
 }
@@ -203,7 +203,7 @@
 .tour-welcome { z-index: 1810; }
 .gw-card { width: 720px; padding: 24px 28px 20px; }
 .gw-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.gw-brand img { width: 44px; height: 44px; border-radius: 10px; display: block; }
+.gw-brand img { width: 44px; height: 44px; border-radius: 0; display: block; }
 .gw-k { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--biniac); }
 .gw-sub { color: var(--fgColor-muted); font-size: 13px; }
 .gw-card h2 { font-size: 24px; margin-bottom: 14px; }
@@ -296,7 +296,7 @@
 .diploma { padding: 16px; border: 1px dashed var(--borderColor-default); border-radius: 12px; }
 .diploma.on { border: 1px solid var(--biniac); }
 .dp-top { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
-.dp-top img { width: 40px; height: 40px; border-radius: 8px; display: block; }
+.dp-top img { width: 40px; height: 40px; border-radius: 0; display: block; }
 .dp-k { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--biniac); }
 .dp-name { font-size: 20px; font-weight: 600; margin: 12px 0 4px; }
 .dp-foot { margin-top: 10px; font-size: 12px; color: var(--fgColor-muted); }

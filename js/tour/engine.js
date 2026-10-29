@@ -414,6 +414,7 @@
       if (!missingSince) missingSince = Date.now();
       if (miss) miss.hidden = Date.now() - missingSince < 2500;
       if (!b.classList.contains('corner')) cornerBubble();
+      b.classList.toggle('corner-left', !!(els.panel && els.panel.classList.contains('open')));
       return;
     }
     missingSince = 0; if (miss) miss.hidden = true;
@@ -428,7 +429,8 @@
     const ring = els.ring;
     ring.hidden = false;
     const top = Math.max(r.top - pad, 2), left = Math.max(r.left - pad, 2);
-    const bottom = Math.min(r.bottom + pad, window.innerHeight - 2), right = Math.min(r.right + pad, window.innerWidth - 2);
+    const bottom = Math.min(r.bottom + pad, window.innerHeight - 2), right = Math.min(r.right + pad, (t.closest('.tour-panel') ? window.innerWidth : panelLeft()) - 2);
+    ring.hidden = right - left < 8;
     ring.style.top = top + 'px'; ring.style.left = left + 'px'; ring.style.width = Math.max(0, right - left) + 'px'; ring.style.height = Math.max(0, bottom - top) + 'px';
     if (dragged === token) return; // the learner moved the bubble: keep it where they left it
     const avoid = avoidRects(st, r);
@@ -448,6 +450,11 @@
     if (els.panel && els.panel.classList.contains('open')) { const q = els.panel.getBoundingClientRect(); out.push({ top: q.top, left: q.left, width: q.width, height: q.height, w: 6 }); }
     return out;
   }
+  // When the help panel (glossary, achievements…) is open, the usable screen ends where it starts.
+  function panelLeft() {
+    if (els.panel && els.panel.classList.contains('open')) { const l = window.innerWidth - els.panel.offsetWidth; if (l > 0) return l; } // final position, not mid-slide
+    return window.innerWidth;
+  }
   function overlapScore(x, y, W, H, avoid) {
     return avoid.reduce((sum, a) => {
       const ix = Math.max(0, Math.min(x + W, a.left + a.width) - Math.max(x, a.left));
@@ -457,7 +464,7 @@
   }
   // Best of the four screen corners: the one that covers the least of what matters.
   function bestCorner(W, H, avoid) {
-    const vw = window.innerWidth, vh = window.innerHeight, M = 16, topY = 76, dockTop = vh - 88;
+    const vw = panelLeft(), vh = window.innerHeight, M = 16, topY = 76, dockTop = vh - 88;
     const yBottom = Math.max(topY, dockTop - H), xRight = Math.max(M, vw - W - 24);
     const opts = [{ x: xRight, y: yBottom }, { x: M, y: yBottom }, { x: xRight, y: topY }, { x: M, y: topY }];
     opts.forEach((o, i) => { o.score = overlapScore(o.x, o.y, W, H, avoid) + i; });
@@ -473,9 +480,9 @@
     b.classList.remove('center', 'corner', 'corner-left');
     avoid = avoid || [{ top: r.top, left: r.left, width: r.width, height: r.height, w: 1 }];
     const W = b.offsetWidth || 360, H = b.offsetHeight || 200, g = 14, M = 12, dockH = 70;
-    const vw = window.innerWidth, vh = window.innerHeight;
+    const vw = panelLeft(), vh = window.innerHeight;
     const big = r.height > vh * 0.55 || (r.width > vw * 0.6 && r.height > vh * 0.35);
-    if (pref === 'corner' || big) { placeAtCorner(W, H, avoid); return; }
+    if (pref === 'corner' || big || vw < W + 2 * M) { placeAtCorner(W, H, avoid); return; }
     if (pref === 'center') { centerBubble(); return; }
     const controls = avoid.filter(a => a.w > 1);
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
