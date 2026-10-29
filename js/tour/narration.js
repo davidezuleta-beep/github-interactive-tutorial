@@ -104,6 +104,6 @@
     'cheer-1', 'cheer-2'
   ]);
   const map = {};
-  lines.forEach(([key, file, text]) => { map[key] = { file, text, src: 'audio/' + file + '.mp3', ready: ready.has(file) }; });
+  lines.forEach(([key, file, text]) => { map[key] = { file, text, src: 'audio/' + file + '.mp3?v=' + (window.ASSET_V || '1'), ready: ready.has(file) }; });
   GH.narration = { lines, map, ready, voice: { name: 'Mariana', voice_id: 'GUeHs6BPO7Btpp3ZjcQH', model: 'eleven_v4' } };
 })(window.GH);

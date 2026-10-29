@@ -91,6 +91,8 @@ El progreso se guarda en el `localStorage` del navegador. Desde el panel de ayud
 
 El sitio se publica con GitHub Pages desde la rama `main` (carpeta raíz). Cualquier cambio que se suba a `main` se publica automáticamente en uno o dos minutos.
 
+**Antes de cada publicación**, ejecuta `python3 tools/bump-version.py`. Pone un número de versión nuevo en los enlaces a estilos, scripts, audios y logo (`?v=…`), así los navegadores descargan los archivos nuevos en lugar de usar los que guardaron en caché.
+
 ## Créditos y licencias
 
 - Iconos: [Octicons](https://github.com/primer/octicons) — MIT License, © GitHub Inc. (ver `OCTICONS-LICENSE.txt`).
