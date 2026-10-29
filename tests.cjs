@@ -1,0 +1,28 @@
+const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict'),crypto=require('node:crypto');
+const root=__dirname+'/';
+let storage={};const sandbox={window:{},crypto:crypto.webcrypto,Uint32Array,console,localStorage:{getItem:k=>storage[k]||null,setItem:(k,v)=>storage[k]=v}};
+vm.createContext(sandbox);for(const file of ['data.js','model.js','lessons.js'])vm.runInContext(fs.readFileSync(root+file,'utf8'),sandbox,{filename:file});
+const G=sandbox.window.GitSim,S=G.Store;let passed=0;
+function check(name,fn){fn();passed++;console.log('PASS '+name);}
+check('8 modules and 35 meaningful steps',()=>{assert.equal(G.LESSONS.length,8);assert.ok(G.LESSONS.reduce((n,m)=>n+m.steps.length,0)>=35);});
+const r=S.createRepo('mi-prueba','Descripción','private',true);
+check('Repository is listed, visibility and README persist',()=>{assert.equal(S.repo(r.id),r);assert.equal(r.visibility,'private');assert.ok(S.branch(r).files['README.md']);assert.equal(S.branch(r).commits.length,1);});
+check('Duplicate names and invalid paths are rejected',()=>{assert.throws(()=>S.createRepo('mi-prueba','','public',true));assert.equal(S.validPath('../secret'),false);assert.equal(S.validPath('__proto__/x'),false);assert.equal(S.validPath('docs/notes.md'),true);});
+S.commit(r,{...S.branch(r).files,...G.EXAMPLE_FILES},'Agregar proyecto');
+check('Uploaded files create one coherent commit',()=>{assert.equal(S.branch(r).commits.length,2);assert.ok(S.branch(r).files['index.html']);assert.equal(S.branch(r).commits[0].changes.length,3);});
+const original=r.branches.main.files['README.md'];S.createBranch(r,'mejora');S.commit(r,{...S.branch(r).files,'README.md':original+'\nUna mejora.\n'},'Mejorar bienvenida');
+check('Changes on a branch never mutate main',()=>{assert.equal(r.branches.main.files['README.md'],original);assert.notEqual(S.branch(r).files['README.md'],original);assert.equal(r.branches.main.commits.length,2);});
+S.switchBranch(r,'main');S.commit(r,{...S.branch(r).files,'notas.txt':'Un cambio independiente en main.'},'Anotar idea');S.switchBranch(r,'mejora');const pr=S.createPR(r,'mejora','main','Mi propuesta','Descripción');
+check('A PR has a reviewable base and source',()=>{assert.equal(pr.state,'open');assert.equal(pr.head,'mejora');assert.equal(pr.base,'main');assert.equal(S.mergePlan(r,pr).conflicts.length,0);});
+S.merge(r,pr);
+check('Merge preserves independent main files and commit history',()=>{assert.equal(pr.state,'merged');assert.equal(r.currentBranch,'main');assert.ok(S.branch(r).files['README.md'].includes('Una mejora'));assert.equal(S.branch(r).files['notas.txt'],'Un cambio independiente en main.');assert.ok(S.branch(r).commits[0].merge);assert.ok(S.branch(r).commits.some(c=>c.message==='Mejorar bienvenida'));});
+S.createBranch(r,'conflict');S.commit(r,{...S.branch(r).files,'notas.txt':'Versión rama'},'Cambiar nota en rama');S.switchBranch(r,'main');S.commit(r,{...S.branch(r).files,'notas.txt':'Versión main'},'Cambiar nota en main');const conflict=S.createPR(r,'conflict','main','Conflicto','');
+check('Conflicting edits block merge and leave main intact',()=>{assert.equal(S.mergePlan(r,conflict).conflicts[0],'notas.txt');assert.throws(()=>S.merge(r,conflict));assert.equal(r.branches.main.files['notas.txt'],'Versión main');});
+S.merge(r,conflict,{'notas.txt':'head'});
+check('Explicit conflict resolution integrates the chosen version',()=>assert.equal(S.branch(r).files['notas.txt'],'Versión rama'));
+const beforeRestore=S.branch(r).commits.length;S.restore(S.branch(r).commits.at(-1),r);
+check('Restore creates a new version and preserves all previous commits',()=>{assert.equal(S.branch(r).commits.length,beforeRestore+1);assert.equal(S.branch(r).files['index.html'],undefined);});
+check('Empty changes and protected branch names are rejected',()=>{assert.throws(()=>S.commit(r,S.branch(r).files,'No change'));assert.throws(()=>S.createBranch(r,'__proto__'));assert.throws(()=>S.createBranch(r,'bad..name'));});
+check('Persistence serializes a recoverable complete state',()=>{S.save();const saved=JSON.parse(storage[S.KEY]);assert.equal(saved.repos[0].name,'mi-prueba');assert.equal(saved.repos[0].prs[0].state,'merged');});
+S.reset();check('Reset restores only fictitious seeded repositories',()=>{assert.equal(S.state.repos.length,2);assert.equal(S.state.learning.completed.length,0);assert.ok(S.state.welcomeSeen);});
+console.log(`${passed} domain checks passed.`);
