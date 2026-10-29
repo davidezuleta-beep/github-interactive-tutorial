@@ -524,6 +524,7 @@
   function evaluateCheck() {
     const st = step(); if (!st || !st.advance || !st.advance.check) return;
     let ok = false; try { ok = !!st.advance.check(C().ctx); } catch (e) { ok = false; }
+    if (st.warn) showWarn(st);
     if (st.advance.auto) { if (ok) { const my = token; st._pending = st._pending || setTimeout(() => { st._pending = null; if (my === token) { let still = false; try { still = st.advance.check(C().ctx); } catch (e) { /* */ } if (still) next(); } }, 350); } return; }
     const btn = els.bubble.querySelector('[data-t="next"]'); if (btn) btn.disabled = !ok;
   }
@@ -554,6 +555,13 @@
     if (st.advance !== 'click') return;
     const sel = st.click || st.target;
     if (sel && t.closest(sel)) scheduleAdvance(90);
+  }
+  // Aviso persistente mientras dura una condición (p. ej. el nombre de rama ya existe).
+  function showWarn(st) {
+    const h = els.bubble.querySelector('.tb-hint'); if (!h) return;
+    let msg = ''; try { msg = st.warn(C().ctx) || ''; } catch (e) { msg = ''; }
+    if (msg) { clearTimeout(hintTimer); if (h.hidden || h.dataset.warn !== msg) { h.hidden = false; h.dataset.warn = msg; h.querySelector('span').innerHTML = msg; lastRect = null; position(); } }
+    else if (h.dataset.warn) { h.hidden = true; delete h.dataset.warn; lastRect = null; position(); }
   }
   let hintTimer = null;
   function showHint(st) {

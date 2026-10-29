@@ -47,8 +47,20 @@
     repoName: () => { const r = ctx.repo(); return r ? r.name : 'mi-primer-proyecto'; },
     full: () => { const r = ctx.repo(); return r ? `${r.owner}/${r.name}` : 'tu-usuario/mi-primer-proyecto'; },
     branch: () => S().state.tutorial.branch || 'mejoras-readme',
-    vis: () => { const r = ctx.repo(); return r ? r.visibility : 'public'; }
+    vis: () => { const r = ctx.repo(); return r ? r.visibility : 'public'; },
+    // Nombre libre sugerido para la rama nueva (si «mejoras-readme» ya existe de un intento anterior, propone «mejoras-readme-2»…).
+    freeBranch: () => { const r = ctx.repo(); let n = 'mejoras-readme', i = 2; while (r && r.branches[n]) n = 'mejoras-readme-' + (i++); return n; }
   };
+  // Si la persona escribe el nombre de una rama que ya existe, GitHub no ofrece crearla: lo explicamos en el globo.
+  function branchTaken() {
+    const r = ctx.repo(), el = document.querySelector(T('branch-filter'));
+    const q = ((el && el.value) || '').trim(); if (!r || !q) return '';
+    const clean = q.replace(/\s+/g, '-').replace(/[^\w.\-]/g, '-');
+    if (!r.branches[clean]) return '';
+    return clean === r.defaultBranch
+      ? `<strong>main</strong> es la rama principal y ya existe. Escribe un nombre nuevo, por ejemplo <code>${ctx.freeBranch()}</code>.`
+      : `Ya existe una rama llamada <strong>${clean}</strong> (quizá la creaste en un intento anterior). GitHub no deja repetir nombres: escribe otro, por ejemplo <code>${ctx.freeBranch()}</code>, o pulsa «Escribirlo por mí».`;
+  }
   function uniqueName(base) { let n = base, i = 2; while (S().raw(S().me(), n)) n = base + '-' + (i++); return n; }
   function ensureRepo() {
     let r = ctx.repo();
@@ -241,7 +253,7 @@
       steps: [
         { title: '¿Qué es una rama?', body: 'Una <strong>rama</strong> (<em>branch</em>) es una copia paralela del proyecto donde haces cambios sin tocar la versión principal, llamada <strong>main</strong>.<br><br>Es como duplicar un documento para escribir un borrador: el original sigue intacto hasta que decidas unirlos.', advance: 'next' },
         { title: 'El selector de ramas', target: T('branch-btn'), body: 'Este botón indica en qué rama estás: <strong>main</strong>.<br><br>👉 Haz clic en él.', advance: 'click' },
-        { title: 'Crea tu rama', target: T('branch-filter'), transient: true, placement: 'right', body: 'En esta lista puedes cambiar de rama o crear una nueva.<br><br>👉 Escribe el nombre de tu nueva rama, por ejemplo <code>mejoras-readme</code>.', advance: { check: () => !!document.querySelector(T('create-branch-item')), auto: true }, actions: [{ label: 'Escribirlo por mí', run: () => typeInto(T('branch-filter'), 'mejoras-readme') }] },
+        { title: 'Crea tu rama', target: T('branch-filter'), transient: true, placement: 'right', body: () => `En esta lista puedes cambiar de rama o crear una nueva.<br><br>👉 Escribe el nombre de tu nueva rama, por ejemplo <code>${ctx.freeBranch()}</code>.`, advance: { check: () => !!document.querySelector(T('create-branch-item')), auto: true }, warn: branchTaken, actions: [{ label: 'Escribirlo por mí', run: () => typeInto(T('branch-filter'), ctx.freeBranch()) }] },
         { title: 'Confírmalo', target: T('create-branch-item'), transient: true, placement: 'right', body: 'Dice «crear la rama … a partir de main»: tu rama empieza como una copia exacta de main.<br><br>👉 Haz clic en <strong>Create branch … from main</strong>.', advance: { event: 'branch:created' } },
         { title: 'Ya estás en tu rama', target: T('branch-btn'), body: () => `El botón ahora dice <strong>${ctx.branch()}</strong>. Todo lo que cambies aquí no afectará a main.`, advance: 'next' },
         { title: 'Edita el README', target: T('readme-edit'), body: '👉 Haz clic en el <strong>lápiz</strong> para editar el README.', advance: 'click', route: /\/edit\// },
