@@ -84,8 +84,14 @@
   // Audios ya grabados y guardados en audio/. Solo estos pasos muestran el botón de voz;
   // los demás funcionan con texto. Al agregar un MP3 nuevo, añade aquí su nombre de archivo.
   const ready = new Set([
-    'intro-0', 'intro-1', 'intro-2', 'intro-3',
-    'm1-01', 'm1-02', 'm1-03', 'm1-04', 'm1-05', 'm1-06', 'm1-07', 'm1-08'
+    'intro-0', 'intro-1', 'intro-2', 'intro-3', 'm1-01', 'm1-02', 'm1-03', 'm1-04',
+    'm1-05', 'm1-06', 'm1-07', 'm1-08', 'm1-09', 'm1-10', 'm1-11', 'm1-12',
+    'm1-13', 'm1-14', 'done-m1', 'm2-01', 'm2-02', 'm2-03', 'm2-04', 'm2-05',
+    'm2-06', 'm2-07', 'm2-08', 'm2-09', 'm2-10', 'm2-11', 'm2-12', 'done-m2',
+    'm3-01', 'm3-02', 'm3-03', 'm3-04', 'm3-05', 'm3-06', 'm3-07', 'm3-08',
+    'm3-09', 'm3-10', 'm3-11', 'm3-12', 'm3-13', 'm3-14', 'm3-15', 'm3-16',
+    'm3-17', 'm3-18', 'm3-19', 'done-m3', 'hint-0', 'hint-1', 'hint-2', 'cheer-0',
+    'cheer-1', 'cheer-2'
   ]);
   const map = {};
   lines.forEach(([key, file, text]) => { map[key] = { file, text, src: 'audio/' + file + '.mp3', ready: ready.has(file) }; });
