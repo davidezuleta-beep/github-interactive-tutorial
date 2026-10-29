@@ -6,10 +6,11 @@ Simulador educativo para que personas sin conocimientos técnicos aprendan a usa
 
 ## Qué incluye
 
-- **Bienvenida** amable: qué es GitHub, para qué sirve y cómo funciona el simulador (con nombre personalizable).
-- **8 módulos guiados** (≈ 100 pasos): Dashboard, repositorios, explorar un proyecto, subir archivos y commits, ramas, pull requests y merge, seguridad y administración, y exploración libre.
+- **Bienvenida** amable: qué es GitHub, para qué sirve, **cómo usar el tutorial** y cómo funciona el simulador (con nombre personalizable).
+- **8 módulos guiados** (108 pasos): Dashboard, repositorios, explorar un proyecto, subir archivos y commits, ramas, pull requests y merge, seguridad y administración, y exploración libre.
 - **Globos contextuales** con resaltado del elemento, **pistas** cuando se hace clic en el lugar equivocado, y botones **Atrás**, **Repetir paso**, **Repetir módulo** y **Reiniciar todo**.
-- **Exploración libre** con 7 **retos** que se marcan solos, **glosario** y acceso al índice de módulos.
+- **Glosario de 44 términos** enlazado automáticamente: cada palabra nueva se puede pulsar para ver su significado.
+- **Exploración libre** con 7 **retos** que se marcan solos, glosario y acceso al índice de módulos.
 - **Simulación funcional**: crear repositorios, subir archivos (de ejemplo o propios, que nunca salen del equipo), editar archivos, commits e historial, ver versiones antiguas, ramas, comparar, pull requests, merge, borrar ramas, issues, comentarios, estrellas, forks, cambiar visibilidad, renombrar, invitar colaboradores y roles.
 
 ## Estructura
@@ -50,7 +51,13 @@ Para resaltar un elemento nuevo, agrégale `data-tour="nombre"` en la vista corr
 
 **Agregar un módulo.** Añade un objeto a `modules` con `id`, `title`, `icon`, `learn` (resumen final), `prepare()` (deja la pantalla lista; usa `ensureRepo()` o `ensureBranchWithChange()` para crear lo necesario) y `steps`.
 
-**Glosario y retos.** Edita los arreglos `glossary` (`[clave, término, definición]`) y `challenges` (`[título, descripción, función que devuelve true cuando se cumple]`).
+**Regla de oro: ningún concepto sin explicación.** Cada término nuevo se explica en palabras sencillas la primera vez que aparece y debe tener su entrada en el glosario.
+
+**Glosario.** Cada entrada de `glossary` es `{ k: 'clave', t: 'Término', d: 'Definición', a: ['variantes', 'que se enlazan'] }`. Todas las variantes (`a`) se convierten automáticamente en enlaces (subrayado punteado) en los globos, los resúmenes, los retos y las definiciones del propio glosario. Una variante con mayúsculas solo se enlaza si coincide exactamente (por ejemplo `PR`, `Settings`); en minúsculas, sin importar mayúsculas. El glosario indica solo en qué módulo aparece cada término por primera vez.
+
+**Instrucciones de uso.** El texto «Cómo usar este tutorial» (diapositiva de bienvenida y botón **Ayuda** de la barra) está en la constante `howTo` de `js/tour/content.js`.
+
+**Retos.** Edita `challenges` (`[título, descripción, función que devuelve true cuando se cumple]`).
 
 **Datos de ejemplo.** El recetario de la comunidad y los demás datos ficticios se definen en la función `seed()` de `js/store.js`.
 

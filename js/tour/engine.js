@@ -24,6 +24,60 @@
     for (const el of list) { const r = el.getBoundingClientRect(); if (r.width > 0 && r.height > 0) return el; }
     return null;
   }
+  // ---------------- Glossary auto-linking ----------------
+  let matchers = null;
+  const escRe = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  function getMatchers() {
+    if (matchers) return matchers;
+    matchers = [];
+    C().glossary.forEach(g => g.a.forEach(al => matchers.push({ k: g.k, len: al.length, re: new RegExp('(^|[^\\p{L}\\p{N}_])(' + escRe(al) + ')(?![\\p{L}\\p{N}_])', /[A-Z]/.test(al) ? 'u' : 'iu') })));
+    matchers.sort((a, b) => b.len - a.len);
+    return matchers;
+  }
+  const NO_LINK = 'code, kbd, button, a, h2, h3, input, textarea, label, .tb-term, .no-gloss';
+  // Wraps the first mention of each glossary term inside `root` with a clickable term button.
+  function linkify(root, used) {
+    if (!root) return;
+    used = used || new Set();
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.nodeValue.trim() && !(n.parentElement && n.parentElement.closest(NO_LINK)) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT) });
+    const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      let cur = node;
+      for (;;) {
+        const text = cur.nodeValue; let best = null;
+        getMatchers().forEach(m => {
+          if (used.has(m.k)) return;
+          const r = m.re.exec(text); if (!r) return;
+          const idx = r.index + r[1].length;
+          if (!best || idx < best.idx || (idx === best.idx && r[2].length > best.word.length)) best = { idx, word: r[2], k: m.k };
+        });
+        if (!best) break;
+        used.add(best.k);
+        const after = cur.splitText(best.idx);
+        const rest = after.splitText(best.word.length);
+        const b = document.createElement('button');
+        b.className = 'tb-term'; b.type = 'button'; b.setAttribute('data-term', best.k); b.title = 'Ver en el glosario';
+        b.textContent = best.word;
+        after.parentNode.replaceChild(b, after);
+        cur = rest;
+      }
+    });
+    return used;
+  }
+  tour.linkify = linkify;
+  let firstSeen = null;
+  function termFirstSeen() {
+    if (firstSeen) return firstSeen;
+    firstSeen = {};
+    const div = document.createElement('div');
+    C().modules.forEach((M, i) => M.steps.forEach(st => {
+      let h = ''; try { h = val(st.body); } catch (e) { /* */ }
+      div.innerHTML = h; const txt = ' ' + div.textContent + ' ';
+      getMatchers().forEach(m => { if (firstSeen[m.k] == null && m.re.test(txt)) firstSeen[m.k] = i; });
+    }));
+    return firstSeen;
+  }
+
   function closeAllOverlays() { GH.ui.closeMenus(); GH.ui.closeDialog(); GH.ui.closePalette(true); GH.ui.closeDrawer(); }
 
   // ---------------- Init ----------------
@@ -88,7 +142,7 @@
       inp.addEventListener('input', upd); upd();
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') finishIntro('guided'); });
     }
-    setTimeout(() => { const b = m.querySelector('[data-t="intro-next"], [data-t="intro-start"]'); if (b && !inp) b.focus(); }, 30);
+    setTimeout(() => { const card = m.querySelector('.ti-card'); if (card) card.scrollTop = 0; const b = m.querySelector('[data-t="intro-next"], [data-t="intro-start"]'); if (b && !inp) b.focus({ preventScroll: true }); }, 30);
     renderDock();
   }
   function finishIntro(mode) {
@@ -163,6 +217,7 @@
       <div class="tb-foot"><button class="btn btn-sm" data-t="repeat-module">${icon('sync')} Repetir módulo</button><span class="flex-1"></span>
       ${nextM ? `<button class="btn btn-primary btn-sm" data-t="next-module">Siguiente: ${esc(nextM.title)} ${icon('arrow-right')}</button>` : `<button class="btn btn-primary btn-sm" data-t="free">Explorar libremente</button>`}</div>`;
     els.bubble.style.left = ''; els.bubble.style.top = '';
+    linkify(els.bubble.querySelector('.tb-learn'));
     els.live.textContent = `Módulo ${m + 1} completado`;
     renderDock();
     GH.bus.emit('tour:module-complete', m);
@@ -226,13 +281,16 @@
     b.className = 'tour-bubble';
     const isNext = st.advance === 'next' || (st.advance && st.advance.check && !st.advance.auto);
     const actions = (st.actions || []).map((a, k) => `<button class="btn btn-sm ${a.primary ? 'btn-primary' : ''}" data-t="action" data-k="${k}">${a.label}</button>`).join('');
+    const auto = st.advance && st.advance.check && st.advance.auto;
+    const cue = isNext ? '' : (st.cue || (st.advance === 'click' ? 'Haz clic en lo que tiene borde azul' : st.advance && st.advance.event === 'tour:term-opened' ? 'Haz clic en la palabra subrayada' : auto ? (/^(INPUT|TEXTAREA)$/.test((findTarget(st.target) || {}).tagName || '') ? 'Escribe en la casilla con borde azul' : 'Usa la zona con borde azul') : (st.actions && st.actions.length && !st.target) ? 'Usa el botón verde de este globo' : 'Sigue la instrucción 👉 para continuar'));
     b.innerHTML = `<div class="tb-head"><span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="flex-1"><div class="tb-guide">Tu guía</div><div class="tb-module">Módulo ${ts.m + 1} · Paso ${ts.s + 1} de ${M.steps.length}</div></div><button class="btn btn-invisible btn-sm btn-icon" data-t="minimize" aria-label="Minimizar el globo">${icon('dash')}</button></div>
       <h3 id="tb-title">${st.title}</h3>
       <div class="tb-body">${val(st.body)}</div>
       <div class="tb-hint" hidden>${icon('light-bulb')}<span></span></div>
       <div class="tb-missing" hidden>${icon('info')}<span>No encuentro el elemento de este paso. ¿Se cerró un menú o cambiaste de página?</span><button class="btn btn-sm" data-t="repeat-step">Repetir paso</button></div>
-      <div class="tb-foot">${ts.m > 0 || ts.s > 0 ? `<button class="btn btn-sm btn-invisible" data-t="back" aria-label="Paso anterior">${icon('arrow-left')} Atrás</button>` : ''}<span class="flex-1"></span>${actions}${isNext ? `<button class="btn btn-sm btn-primary" data-t="next" ${st.advance === 'next' ? '' : 'disabled'}>Continuar ${icon('arrow-right')}</button>` : ''}</div>`;
+      <div class="tb-foot">${ts.m > 0 || ts.s > 0 ? `<button class="btn btn-sm btn-invisible" data-t="back" aria-label="Paso anterior">${icon('arrow-left')} Atrás</button>` : ''}${cue ? `<span class="tb-cue">${icon('info', 12)} ${cue}</span>` : ''}<span class="flex-1"></span>${actions}${isNext ? `<button class="btn btn-sm btn-primary" data-t="next" ${st.advance === 'next' ? '' : 'disabled'}>Continuar ${icon('arrow-right')}</button>` : ''}</div>`;
     fillDynamic();
+    linkify(b.querySelector('.tb-body'));
     lastRect = null;
     position();
   }
@@ -275,10 +333,10 @@
     placeBubble(r, st.placement);
   }
   function centerBubble() { const b = els.bubble; b.classList.remove('corner'); b.classList.add('center'); b.style.left = ''; b.style.top = ''; b.removeAttribute('data-arrow'); }
-  function cornerBubble() { const b = els.bubble; b.classList.remove('center'); b.classList.add('corner'); b.style.left = ''; b.style.top = ''; b.removeAttribute('data-arrow'); }
+  function cornerBubble() { const b = els.bubble; b.classList.remove('center'); b.classList.add('corner'); b.classList.toggle('corner-left', !!(els.panel && els.panel.classList.contains('open'))); b.style.left = ''; b.style.top = ''; b.removeAttribute('data-arrow'); }
   function placeBubble(r, pref) {
     const b = els.bubble;
-    b.classList.remove('center', 'corner');
+    b.classList.remove('center', 'corner', 'corner-left');
     const W = b.offsetWidth || 360, H = b.offsetHeight || 200, g = 14, M = 12, dockH = 70;
     const vw = window.innerWidth, vh = window.innerHeight;
     const big = r.height > vh * 0.55 || (r.width > vw * 0.6 && r.height > vh * 0.35);
@@ -371,7 +429,7 @@
   // ---------------- Tour layer clicks ----------------
   function onLayerClick(e) {
     const term = e.target.closest('.tb-term');
-    if (term) { openPanel('glossary', term.getAttribute('data-term')); return; }
+    if (term) { openPanel('glossary', term.getAttribute('data-term')); GH.bus.emit('tour:term-opened', term.getAttribute('data-term')); return; }
     const b = e.target.closest('[data-t]'); if (!b) return;
     const t = b.getAttribute('data-t');
     const st = step();
@@ -399,6 +457,8 @@
       case 'show-intro': closePanel(); showIntro(0); break;
       case 'confirm-yes': { const fn = confirmFn; closeConfirm(); if (fn) fn(); break; }
       case 'confirm-no': closeConfirm(); break;
+      case 'howto': tour.showHowTo(); break;
+      case 'howto-close': { const h = layer().querySelector('.tour-howto'); if (h) h.remove(); break; }
     }
   }
   function firstIncomplete() { for (let i = 0; i < C().modules.length; i++) if (!ts.completed.includes(i)) return i; return 0; }
@@ -414,23 +474,25 @@
       const M = mod(); const total = M.steps.length; const s = Math.min(ts.s + 1, total);
       d.innerHTML = `<div class="td-mods" aria-label="Progreso por módulos">${C().modules.map((x, i) => `<span class="${ts.completed.includes(i) ? 'done' : ''} ${i === ts.m ? 'cur' : ''}" title="Módulo ${i + 1}: ${esc(x.title)}"></span>`).join('')}</div>
         <div class="td-info"><div class="td-title">Módulo ${ts.m + 1} de ${N} · ${esc(M.title)}</div><div class="td-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${s}" aria-label="Pasos del módulo"><i style="width:${(ts.s >= total ? 1 : s / total) * 100}%"></i></div></div>
-        <div class="td-btns"><button class="btn btn-sm btn-invisible btn-icon" data-t="back" title="Paso anterior" aria-label="Paso anterior" ${ts.m === 0 && ts.s === 0 ? 'disabled' : ''}>${icon('arrow-left')}</button>
-        <button class="btn btn-sm btn-invisible btn-icon" data-t="repeat-step" title="Repetir este paso" aria-label="Repetir este paso">${icon('sync')}</button>
-        <button class="btn btn-sm btn-invisible btn-icon" data-t="panel" data-tab="modules" title="Índice del recorrido" aria-label="Índice del recorrido">${icon('list-unordered')}</button>
-        <button class="btn btn-sm btn-invisible btn-icon" data-t="panel" data-tab="glossary" title="Glosario" aria-label="Glosario">${icon('book')}</button>
+        <div class="td-btns"><button class="btn btn-sm btn-invisible td-b" data-t="back" title="Volver al paso anterior" aria-label="Paso anterior" ${ts.m === 0 && ts.s === 0 ? 'disabled' : ''}>${icon('arrow-left')}<span class="td-lbl">Atrás</span></button>
+        <button class="btn btn-sm btn-invisible td-b" data-t="repeat-step" title="Empezar de nuevo este paso" aria-label="Repetir este paso">${icon('sync')}<span class="td-lbl">Repetir</span></button>
+        <button class="btn btn-sm btn-invisible td-b" data-t="panel" data-tab="modules" title="Ver los 8 módulos" aria-label="Índice del recorrido">${icon('list-unordered')}<span class="td-lbl">Índice</span></button>
+        <button class="btn btn-sm btn-invisible td-b" data-t="panel" data-tab="glossary" title="Significado de las palabras nuevas" aria-label="Glosario">${icon('book')}<span class="td-lbl">Glosario</span></button>
+        <button class="btn btn-sm btn-invisible td-b" data-t="howto" title="Cómo usar el tutorial" aria-label="Ayuda: cómo usar el tutorial">${icon('question')}<span class="td-lbl">Ayuda</span></button>
         <button class="btn btn-sm" data-t="go-free" title="Salir del recorrido y navegar libremente">Explorar libre</button></div>`;
     } else {
       d.innerHTML = `<span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="td-info"><div class="td-title">Exploración libre</div><div class="td-sub">${ts.completed.length} de ${N} módulos · ${done} de ${C().challenges.length} retos</div></div>
-        <div class="td-btns"><button class="btn btn-sm" data-t="panel" data-tab="challenges">${icon('goal')} Retos</button><button class="btn btn-sm" data-t="panel" data-tab="glossary">${icon('book')} Glosario</button><button class="btn btn-sm btn-primary" data-t="panel" data-tab="modules">${icon('mortar-board')} Recorrido guiado</button></div>`;
+        <div class="td-btns"><button class="btn btn-sm" data-t="panel" data-tab="challenges">${icon('goal')} Retos</button><button class="btn btn-sm" data-t="panel" data-tab="glossary">${icon('book')} Glosario</button><button class="btn btn-sm btn-invisible btn-icon" data-t="howto" title="Cómo usar el tutorial" aria-label="Ayuda: cómo usar el tutorial">${icon('question')}</button><button class="btn btn-sm btn-primary" data-t="panel" data-tab="modules">${icon('mortar-board')} Recorrido guiado</button></div>`;
     }
   }
 
   // ---------------- Panel ----------------
   let panelTerm = null;
-  function openPanel(tab, termKey) { ts.panelTab = tab || ts.panelTab; panelTerm = termKey || null; save(); renderPanel(); els.panel.classList.add('open'); els.panel.setAttribute('aria-hidden', 'false'); }
-  function closePanel() { if (!els.panel) return; els.panel.classList.remove('open'); els.panel.setAttribute('aria-hidden', 'true'); }
+  function openPanel(tab, termKey) { ts.panelTab = tab || ts.panelTab; panelTerm = termKey || null; save(); renderPanel(); els.panel.classList.add('open'); els.panel.setAttribute('aria-hidden', 'false'); lastRect = null; setTimeout(position, 30); }
+  function closePanel() { if (!els.panel) return; els.panel.classList.remove('open'); els.panel.setAttribute('aria-hidden', 'true'); lastRect = null; setTimeout(position, 30); }
   function togglePanel(tab) { if (els.panel.classList.contains('open') && ts.panelTab === tab) closePanel(); else openPanel(tab); }
   tour.openPanel = openPanel;
+  tour.closePanel = closePanel;
   function renderPanel() {
     const tab = ts.panelTab;
     const tabs = [['modules', 'mortar-board', 'Recorrido'], ['glossary', 'book', 'Glosario'], ['challenges', 'goal', 'Retos'], ['settings', 'gear', 'Ajustes']];
@@ -440,9 +502,11 @@
         const done = ts.completed.includes(i), cur = ts.mode === 'guided' && ts.m === i;
         return `<div class="tp-mod ${done ? 'done' : ''} ${cur ? 'cur' : ''}"><span class="tp-ic">${done ? icon('check') : icon(m.icon)}</span><div class="flex-1"><div class="f6 muted">Módulo ${i + 1}</div><strong>${esc(m.title)}</strong>${cur ? '<div class="f6" style="color:var(--fgColor-accent)">En curso</div>' : ''}</div><button class="btn btn-sm ${!done && !cur ? 'btn-primary' : ''}" data-t="start-module" data-m="${i}">${done ? 'Repetir' : cur ? 'Reiniciar' : 'Empezar'}</button></div>`;
       }).join('')}</div>
-      <div class="flex gap-2 mt-3">${ts.mode !== 'guided' ? `<button class="btn btn-primary" data-t="continue-guided">Continuar el recorrido</button>` : `<button class="btn" data-t="go-free">Pasar a exploración libre</button>`}<button class="btn btn-invisible" data-t="show-intro">Ver la bienvenida</button></div>`;
+      <div class="flex gap-2 mt-3">${ts.mode !== 'guided' ? `<button class="btn btn-primary" data-t="continue-guided">Continuar el recorrido</button>` : `<button class="btn" data-t="go-free">Pasar a exploración libre</button>`}<button class="btn btn-invisible" data-t="howto">${icon('question')} Cómo usar el tutorial</button><button class="btn btn-invisible" data-t="show-intro">Ver la bienvenida</button></div>`;
     } else if (tab === 'glossary') {
-      body = `<div class="input-wrap mb-3">${icon('search')}<input class="form-control" id="tp-gq" placeholder="Buscar un término…" aria-label="Buscar en el glosario"></div><dl class="tp-gloss">${C().glossary.map(([k, t, d]) => `<div class="tp-term ${panelTerm === k ? 'hl' : ''}" id="term-${k}" data-k="${esc((t + ' ' + d).toLowerCase())}"><dt>${t}</dt><dd>${d}</dd></div>`).join('')}</dl>`;
+      const fs = termFirstSeen();
+      const list = C().glossary.slice().sort((a, b) => a.t.localeCompare(b.t, 'es', { sensitivity: 'base' }));
+      body = `<p class="muted f6 mb-2">${list.length} términos. Las palabras subrayadas dentro de las definiciones también se pueden pulsar.</p><div class="input-wrap mb-3">${icon('search')}<input class="form-control" id="tp-gq" placeholder="Buscar un término…" aria-label="Buscar en el glosario"></div><dl class="tp-gloss">${list.map(g => `<div class="tp-term ${panelTerm === g.k ? 'hl' : ''}" id="term-${g.k}" data-key="${g.k}" data-k="${esc((g.t + ' ' + g.d + ' ' + g.a.join(' ')).toLowerCase())}"><dt>${g.t}</dt><dd>${g.d}</dd>${fs[g.k] != null ? `<div class="tp-where">${icon('mortar-board', 12)} Aparece desde el Módulo ${fs[g.k] + 1}: ${esc(C().modules[fs[g.k]].title)}</div>` : ''}</div>`).join('')}</dl>`;
     } else if (tab === 'challenges') {
       body = `<p class="muted mb-3">Practica por tu cuenta. Cada reto se marca solo cuando lo logras.</p><ul class="tp-ch">${C().challenges.map(([t, d, f]) => { let ok = false; try { ok = f(); } catch (e) { /* */ } return `<li class="${ok ? 'ok' : ''}"><span class="tp-cb">${ok ? icon('check') : ''}</span><div><strong>${t}</strong><div class="muted f6">${d}</div></div></li>`; }).join('')}</ul>`;
     } else {
@@ -453,10 +517,24 @@
     els.panel.innerHTML = `<div class="tp-head"><strong class="flex-1">Ayuda</strong><button class="btn btn-invisible btn-sm btn-icon" data-t="panel-close" aria-label="Cerrar panel">${icon('x')}</button></div>
       <nav class="tp-tabs" role="tablist">${tabs.map(([id, ic, l]) => `<button role="tab" aria-selected="${tab === id}" class="${tab === id ? 'on' : ''}" data-t="panel-tab" data-tab="${id}">${icon(ic)}<span>${l}</span></button>`).join('')}</nav>
       <div class="tp-body">${body}</div>`;
+    els.panel.querySelectorAll('.tp-term').forEach(x => linkify(x.querySelector('dd'), new Set([x.getAttribute('data-key')])));
+    els.panel.querySelectorAll('.tp-ch .muted').forEach(x => linkify(x));
     const gq = els.panel.querySelector('#tp-gq');
     if (gq) gq.addEventListener('input', () => { const q = gq.value.toLowerCase(); els.panel.querySelectorAll('.tp-term').forEach(x => { x.style.display = x.getAttribute('data-k').includes(q) ? '' : 'none'; }); });
     if (panelTerm) setTimeout(() => { const el = els.panel.querySelector('#term-' + panelTerm); if (el) el.scrollIntoView({ block: 'center' }); }, 30);
   }
+
+  // ---------------- How to use the tutorial ----------------
+  tour.showHowTo = function () {
+    closePanel();
+    const old = layer().querySelector('.tour-howto'); if (old) old.remove();
+    const c = document.createElement('div'); c.className = 'tour-confirm tour-howto';
+    c.innerHTML = `<div class="ti-card" role="dialog" aria-modal="true" aria-labelledby="howto-title"><div class="ti-top"><span class="ti-badge">${icon('light-bulb', 24)}</span></div><h2 id="howto-title">Cómo usar este tutorial</h2><div class="ti-body">${C().howTo}</div><div class="ti-foot"><span class="flex-1"></span><button class="btn btn-primary" data-t="howto-close">Entendido</button></div></div>`;
+    c.addEventListener('click', (e) => { if (e.target === c) c.remove(); });
+    c.addEventListener('keydown', (e) => { if (e.key === 'Escape') c.remove(); });
+    layer().appendChild(c);
+    setTimeout(() => c.querySelector('[data-t="howto-close"]').focus({ preventScroll: true }), 20);
+  };
 
   // ---------------- Confirm box ----------------
   let confirmFn = null;
