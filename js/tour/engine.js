@@ -10,7 +10,7 @@
   let ts = null;                 // persisted tour state
   let stepSnaps = {};            // in-memory snapshots per step
   let token = 0;                 // increments on every step change
-  let tick = null, missingSince = 0, scrolledFor = -1, lastRect = null;
+  let tick = null, missingSince = 0, scrolledFor = -1, lastRect = null, dragged = -1;
   let els = {};
 
   function save() { GH.storage.set(KEY, ts); }
@@ -168,6 +168,32 @@
       <div class="sr-only" aria-live="polite" id="tour-live"></div>`;
     els = { ring: L.querySelector('.tour-ring'), bubble: L.querySelector('.tour-bubble'), dock: L.querySelector('.tour-dock'), panel: L.querySelector('.tour-panel'), live: L.querySelector('#tour-live') };
     L.addEventListener('click', onLayerClick);
+    initDrag();
+  }
+
+  // ---------------- Drag the bubble (mouse, pen or finger) ----------------
+  function initDrag() {
+    const b = els.bubble; let d = null;
+    b.addEventListener('pointerdown', (e) => {
+      const h = e.target.closest('.tb-head, .tb-celebrate, .tb-module');
+      if (!h || e.target.closest('button, a, input') || e.button > 0) return;
+      const r = b.getBoundingClientRect();
+      d = { dx: e.clientX - r.left, dy: e.clientY - r.top, id: e.pointerId, moved: false };
+      b.classList.remove('center', 'corner', 'corner-left'); b.removeAttribute('data-arrow');
+      b.style.left = r.left + 'px'; b.style.top = r.top + 'px';
+      b.classList.add('dragging');
+      try { b.setPointerCapture(e.pointerId); } catch (err) { /* */ }
+      e.preventDefault();
+    });
+    b.addEventListener('pointermove', (e) => {
+      if (!d || e.pointerId !== d.id) return;
+      const W = b.offsetWidth, H = b.offsetHeight;
+      const x = Math.max(4, Math.min(e.clientX - d.dx, window.innerWidth - W - 4));
+      const y = Math.max(4, Math.min(e.clientY - d.dy, window.innerHeight - Math.min(H, 80)));
+      b.style.left = x + 'px'; b.style.top = y + 'px'; d.moved = true;
+    });
+    const end = (e) => { if (!d || (e && e.pointerId !== d.id)) return; b.classList.remove('dragging'); if (d.moved) dragged = token; d = null; };
+    b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
   }
 
   // ---------------- Intro ----------------
@@ -274,6 +300,7 @@
     const res = G().moduleComplete(m);
     const mission = (C().game && C().game.missions[m]) || { name: M.title };
     ts.s = M.steps.length; // "completed" pseudo-step
+    token++; dragged = -1;
     hideRing();
     els.bubble.hidden = false;
     els.bubble.className = 'tour-bubble center done';
@@ -358,7 +385,7 @@
     const actions = (st.actions || []).map((a, k) => `<button class="btn btn-sm ${a.primary ? 'btn-primary' : ''}" data-t="action" data-k="${k}">${a.label}</button>`).join('');
     const auto = st.advance && st.advance.check && st.advance.auto;
     const cue = isNext ? '' : (st.cue || (st.advance === 'click' ? 'Haz clic en lo que tiene borde azul' : st.advance && st.advance.event === 'tour:term-opened' ? 'Haz clic en la palabra subrayada' : auto ? (/^(INPUT|TEXTAREA)$/.test((findTarget(st.target) || {}).tagName || '') ? 'Escribe en la casilla con borde azul' : 'Usa la zona con borde azul') : (st.actions && st.actions.length && !st.target) ? 'Usa el botón verde de este globo' : 'Sigue la instrucción 👉 para continuar'));
-    b.innerHTML = `<div class="tb-head"><span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="flex-1"><div class="tb-guide">Tu guía</div><div class="tb-module">Misión ${ts.m + 1} · Paso ${ts.s + 1} de ${M.steps.length}${G().stepValue(ts.m, ts.s, st) ? ` · <span class="tb-pts">+${G().stepValue(ts.m, ts.s, st)} pts</span>` : ''}</div></div>${voiceBtn(stepKey())}<button class="btn btn-invisible btn-sm btn-icon" data-t="minimize" aria-label="Minimizar el globo">${icon('dash')}</button></div>
+    b.innerHTML = `<div class="tb-head"><span class="tb-avatar" aria-hidden="true">${icon('mortar-board')}</span><div class="flex-1"><div class="tb-guide">Tu guía <span class="tb-grip" title="Arrastra desde aquí para mover el globo">${icon('grabber', 12)}<span>Arrástrame</span></span></div><div class="tb-module">Misión ${ts.m + 1} · Paso ${ts.s + 1} de ${M.steps.length}${G().stepValue(ts.m, ts.s, st) ? ` · <span class="tb-pts">+${G().stepValue(ts.m, ts.s, st)} pts</span>` : ''}</div></div>${voiceBtn(stepKey())}<button class="btn btn-invisible btn-sm btn-icon" data-t="minimize" aria-label="Minimizar el globo">${icon('dash')}</button></div>
       ${ts.s === 0 ? G().missionBanner(ts.m) : ''}
       <h3 id="tb-title">${st.title}</h3>
       <div class="tb-body">${val(st.body)}</div>
@@ -378,7 +405,7 @@
     if (!els.bubble || els.bubble.hidden) return;
     const st = step();
     const b = els.bubble;
-    if (!st) { centerBubble(); return; }
+    if (!st) { if (dragged !== token) centerBubble(); return; }
     if (b.classList.contains('minimized')) { hideRing(); return; }
     const t = findTarget(st.target);
     const miss = b.querySelector('.tb-missing');
@@ -403,21 +430,54 @@
     const top = Math.max(r.top - pad, 2), left = Math.max(r.left - pad, 2);
     const bottom = Math.min(r.bottom + pad, window.innerHeight - 2), right = Math.min(r.right + pad, window.innerWidth - 2);
     ring.style.top = top + 'px'; ring.style.left = left + 'px'; ring.style.width = Math.max(0, right - left) + 'px'; ring.style.height = Math.max(0, bottom - top) + 'px';
-    const key = [Math.round(r.top), Math.round(r.left), Math.round(r.width), Math.round(r.height), b.offsetHeight, window.innerWidth, window.innerHeight].join(',');
+    if (dragged === token) return; // the learner moved the bubble: keep it where they left it
+    const avoid = avoidRects(st, r);
+    const key = avoid.map(a => [a.top, a.left, a.width, a.height].map(Math.round).join(':')).join('|') + ',' + b.offsetHeight + ',' + window.innerWidth + ',' + window.innerHeight + ',' + (els.panel && els.panel.classList.contains('open'));
     if (key === lastRect) return;
     lastRect = key;
-    placeBubble(r, st.placement);
+    placeBubble(r, st.placement, avoid);
   }
   function centerBubble() { const b = els.bubble; b.classList.remove('corner'); b.classList.add('center'); b.style.left = ''; b.style.top = ''; b.removeAttribute('data-arrow'); }
   function cornerBubble() { const b = els.bubble; b.classList.remove('center'); b.classList.add('corner'); b.classList.toggle('corner-left', !!(els.panel && els.panel.classList.contains('open'))); b.style.left = ''; b.style.top = ''; b.removeAttribute('data-arrow'); }
-  function placeBubble(r, pref) {
+  // Rectangles the bubble should not cover: the highlighted target (weight 1) and the controls the
+  // learner must use in this step — click target, allowed buttons, open menus (weight 12).
+  function avoidRects(st, r) {
+    const out = [{ top: r.top, left: r.left, width: r.width, height: r.height, w: 1 }];
+    const sels = [].concat(st.click || [], Array.isArray(st.allow) ? st.allow : []);
+    sels.forEach(sel => { let list = []; try { list = document.querySelectorAll(sel); } catch (e) { /* */ } list.forEach(el => { if (el.closest('#tour-layer')) return; const q = el.getBoundingClientRect(); if (q.width > 0 && q.height > 0) out.push({ top: q.top, left: q.left, width: q.width, height: q.height, w: 12 }); }); });
+    if (els.panel && els.panel.classList.contains('open')) { const q = els.panel.getBoundingClientRect(); out.push({ top: q.top, left: q.left, width: q.width, height: q.height, w: 6 }); }
+    return out;
+  }
+  function overlapScore(x, y, W, H, avoid) {
+    return avoid.reduce((sum, a) => {
+      const ix = Math.max(0, Math.min(x + W, a.left + a.width) - Math.max(x, a.left));
+      const iy = Math.max(0, Math.min(y + H, a.top + a.height) - Math.max(y, a.top));
+      return sum + ix * iy * a.w;
+    }, 0);
+  }
+  // Best of the four screen corners: the one that covers the least of what matters.
+  function bestCorner(W, H, avoid) {
+    const vw = window.innerWidth, vh = window.innerHeight, M = 16, topY = 76, dockTop = vh - 88;
+    const yBottom = Math.max(topY, dockTop - H), xRight = Math.max(M, vw - W - 24);
+    const opts = [{ x: xRight, y: yBottom }, { x: M, y: yBottom }, { x: xRight, y: topY }, { x: M, y: topY }];
+    opts.forEach((o, i) => { o.score = overlapScore(o.x, o.y, W, H, avoid) + i; });
+    return opts.sort((a, b) => a.score - b.score)[0];
+  }
+  function placeAtCorner(W, H, avoid) {
+    const b = els.bubble; const c = bestCorner(W, H, avoid);
+    b.classList.remove('center', 'corner', 'corner-left'); b.removeAttribute('data-arrow');
+    b.style.left = Math.round(c.x) + 'px'; b.style.top = Math.round(c.y) + 'px';
+  }
+  function placeBubble(r, pref, avoid) {
     const b = els.bubble;
     b.classList.remove('center', 'corner', 'corner-left');
+    avoid = avoid || [{ top: r.top, left: r.left, width: r.width, height: r.height, w: 1 }];
     const W = b.offsetWidth || 360, H = b.offsetHeight || 200, g = 14, M = 12, dockH = 70;
     const vw = window.innerWidth, vh = window.innerHeight;
     const big = r.height > vh * 0.55 || (r.width > vw * 0.6 && r.height > vh * 0.35);
-    if (pref === 'corner' || big) { cornerBubble(); return; }
+    if (pref === 'corner' || big) { placeAtCorner(W, H, avoid); return; }
     if (pref === 'center') { centerBubble(); return; }
+    const controls = avoid.filter(a => a.w > 1);
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     const clampX = (x) => Math.max(M, Math.min(x, vw - W - M));
     const clampY = (y) => Math.max(M + 64, Math.min(y, vh - H - dockH));
@@ -427,9 +487,10 @@
       right: { x: r.right + g, y: clampY(cy - H / 2), ok: r.right + g + W < vw - M },
       left: { x: r.left - g - W, y: clampY(cy - H / 2), ok: r.left - g - W > M }
     };
+    Object.keys(cand).forEach(k => { const c = cand[k]; if (c.ok && controls.length && overlapScore(c.x, c.y, W, H, controls) > 0) c.ok = false; });
     const order = [pref || 'bottom', 'bottom', 'top', 'right', 'left'];
     const side = order.find(o => cand[o] && cand[o].ok);
-    if (!side) { cornerBubble(); return; }
+    if (!side) { placeAtCorner(W, H, avoid); return; }
     const p = cand[side];
     b.style.left = Math.round(p.x) + 'px'; b.style.top = Math.round(p.y) + 'px';
     b.setAttribute('data-arrow', side);

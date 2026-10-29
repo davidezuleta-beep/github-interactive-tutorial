@@ -322,3 +322,14 @@
   .tour-dock .td-bar { width: 100%; }
   .tour-dock .td-btns { min-width: 0; }
 }
+/* Globo arrastrable */
+.tour-bubble .tb-head { cursor: grab; touch-action: none; user-select: none; }
+.tour-bubble.dragging { cursor: grabbing; transition: none !important; user-select: none; box-shadow: 0 16px 48px #010409; }
+.tour-bubble.dragging .tb-head { cursor: grabbing; }
+.tb-grip { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; font-size: 11px; font-weight: 400; color: var(--fgColor-muted); opacity: .75; }
+.tour-bubble:hover .tb-grip { opacity: 1; }
+@media (max-width: 600px) { .tb-grip span { display: none; } }
+/* El globo nunca es más alto que la pantalla: se desplaza por dentro y los botones quedan siempre visibles */
+.tour-bubble { max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; }
+.tour-bubble .tb-foot { position: sticky; bottom: -12px; background: #161b22; padding-bottom: 4px; margin-bottom: -4px; z-index: 1; box-shadow: 0 -10px 12px -8px #161b22; }
+@media (max-height: 640px) { .tour-bubble.center.done .tb-learn, .tour-bubble.center.done .tb-learn-h { display: none; } }

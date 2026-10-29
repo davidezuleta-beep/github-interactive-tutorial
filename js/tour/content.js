@@ -89,7 +89,7 @@
       <li><span class="hl-ic"><span class="hl-term">abc</span></span><span>Las <strong>palabras con subrayado punteado</strong> tienen explicación: haz clic y se abre el <strong>glosario</strong> (un diccionario de términos).</span></li>
       <li><span class="hl-ic">${GH.icon('pencil')}</span><span>Si no sabes qué escribir, usa el botón <strong>Escribirlo por mí</strong>.</span></li>
       <li><span class="hl-ic">${GH.icon('light-bulb')}</span><span>Si haces clic en otro lugar, verás una <strong>pista amarilla</strong>. No te preocupes: nada se rompe.</span></li>
-      <li><span class="hl-ic">${GH.icon('dash')}</span><span>Si el globo tapa algo, minimízalo con el botón <strong>–</strong> de su esquina.</span></li>
+      <li><span class="hl-ic">${GH.icon('grabber')}</span><span>Si el globo tapa algo, <strong>arrástralo</strong> desde su parte de arriba (donde dice «Tu guía») o minimízalo con el botón <strong>–</strong>.</span></li>
     </ol>
     <div class="howto-dock">
       <div class="hdk-title">La barra de abajo a la izquierda te acompaña siempre:</div>
