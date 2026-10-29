@@ -114,6 +114,14 @@ svg.octicon { display: inline-block; vertical-align: text-bottom; fill: currentC
 .avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; flex-shrink: 0; font-weight: 600; color: #fff; box-shadow: 0 0 0 1px var(--borderColor-translucent); user-select: none; }
 .avatar.square { border-radius: 6px; }
 .avatar svg { width: 100%; height: 100%; display: block; }
+.avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.avatar-brand { background: #00ffff; }
+.vcard-list { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.vcard-list li { display: flex; gap: 8px; align-items: center; }
+.vcard-list .octicon { color: var(--fgColor-muted); }
+.profile-orgs { border-top: 1px solid var(--borderColor-muted); margin-top: 16px; padding-top: 16px; }
+.profile-orgs h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.profile-orgs .org-chip { display: inline-flex; align-items: center; gap: 8px; }
 
 /* ---------- Form controls ---------- */
 .form-control, .input {
@@ -171,7 +179,7 @@ kbd, .kbd { display: inline-block; padding: 0 5px; font-size: 11px; line-height:
 .AppHeader-globalBar { display: flex; align-items: center; gap: 12px; height: 64px; padding: 16px; }
 .AppHeader-logo { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .AppHeader-context { display: flex; align-items: center; gap: 2px; min-width: 0; font-size: 14px; font-weight: 600; }
-.AppHeader-context a { color: var(--fgColor-default); padding: 2px 6px; border-radius: 6px; line-height: 24px; }
+.AppHeader-context a { color: var(--fgColor-default); padding: 2px 6px; border-radius: 6px; line-height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .AppHeader-context a:hover { background: var(--control-transparent-bgColor-hover); text-decoration: none; }
 .AppHeader-context .owner { font-weight: 400; }
 .AppHeader-context .sep { color: var(--fgColor-muted); padding: 0 2px; }
@@ -181,8 +189,8 @@ kbd, .kbd { display: inline-block; padding: 0 5px; font-size: 11px; line-height:
 .AppHeader-button:hover { background: var(--control-transparent-bgColor-hover); color: var(--fgColor-default); }
 .AppHeader-button.search { padding: 0; width: 32px; }
 .AppHeader-button .badge-dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; background: var(--bgColor-accent-emphasis); border: 2px solid var(--bgColor-inset); }
-.sim-logo { width: 32px; height: 32px; border-radius: 50%; background: #f0f6fc; color: #0d1117; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.sim-logo .octicon { width: 18px; height: 18px; }
+.sim-logo { width: 32px; height: 32px; color: var(--fgColor-default); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sim-logo .octicon { width: 28px; height: 28px; }
 .sim-tag { font-size: 11px; font-weight: 600; color: var(--fgColor-attention); border: 1px solid var(--borderColor-attention-emphasis); border-radius: 999px; padding: 0 7px; line-height: 18px; white-space: nowrap; margin-left: 4px; cursor: help; }
 .AppHeader-avatarBtn { background: none; border: 0; padding: 0; cursor: pointer; border-radius: 50%; }
 .AppHeader-localBar { padding: 0 16px; display: flex; align-items: flex-end; min-height: 48px; }
@@ -558,4 +566,17 @@ kbd, .kbd { display: inline-block; padding: 0 5px; font-size: 11px; line-height:
   .container-xl, .container-lg { padding: 16px; }
   .goto-file { display: none; }
   .profile-avatar { width: 120px !important; height: 120px !important; }
+}
+
+/* Encabezado en pantallas pequeñas: como en GitHub móvil, se ocultan atajos secundarios */
+@media (max-width: 600px) {
+  .AppHeader-globalBar { padding: 12px; gap: 8px; }
+  .AppHeader-logo { gap: 6px; }
+  .AppHeader-actions { gap: 4px; }
+  .AppHeader-actions [data-tour="header-copilot"], .AppHeader-actions .AppHeader-divider,
+  [data-tour="header-repos"], [data-tour="header-pulls"] { display: none !important; }
+  .AppHeader-actions [data-tour="header-shortcuts"] { gap: 4px; }
+  [data-tour="header-create"] .octicon-triangle-down { display: none; }
+  .AppHeader-button { min-width: 30px; height: 30px; padding: 0 6px; }
+  .AppHeader-context { display: none; }
 }

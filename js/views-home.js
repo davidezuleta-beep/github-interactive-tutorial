@@ -185,6 +185,8 @@
           ${p.bio ? `<p class="mt-3">${esc(p.bio)}</p>` : ''}
           ${isMe ? `<button class="btn btn-block mt-3" data-action="editProfile">Edit profile</button>` : `<button class="btn btn-block mt-3" data-action="notsim" data-what="Seguir a otras personas">Follow</button>`}
           <div class="muted mt-3 flex gap-1">${icon('people')} <strong style="color:var(--fgColor-default)">${isMe ? 0 : 42}</strong> followers · <strong style="color:var(--fgColor-default)">${isMe ? 0 : 3}</strong> following</div>
+          ${isMe ? `<ul class="vcard-list" data-tour="profile-brand"><li>${icon('organization')}<span>Biniac</span></li><li>${icon('mortar-board')}<span>Ruta de aprendizaje de GitHub · Biniac</span></li></ul>` : ''}
+          ${isMe ? `<div class="profile-orgs"><h2>Organizations</h2><span class="org-chip" title="Biniac"><span class="avatar avatar-brand square" style="width:32px;height:32px"><img src="${GH.brandLogo}" alt="Biniac" width="32" height="32"></span><span>Biniac</span></span></div>` : ''}
         </div>
         <div>${body}</div>
       </div></div>`

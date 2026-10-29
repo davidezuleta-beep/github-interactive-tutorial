@@ -27,8 +27,14 @@ window.GH = window.GH || {};
   // ---------- Avatars (generated, no external images) ----------
   const palette = ['#1f6feb', '#8957e5', '#bf4b8a', '#d1242f', '#bc4c00', '#9a6700', '#1a7f37', '#0969da', '#6639ba', '#0e8a16'];
   function hash(str) { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return Math.abs(h); }
+  // Logo de Biniac: foto de perfil de la cuenta de práctica (la experiencia es de Biniac).
+  GH.brandLogo = 'assets/biniac-logo.png';
   GH.avatar = function (login, size, square) {
     size = size || 20;
+    const me = GH.store && GH.store.state && GH.store.state.user && GH.store.state.user.login;
+    if (login && login === me) {
+      return `<span class="avatar avatar-brand ${square ? 'square' : ''}" style="width:${size}px;height:${size}px" title="${GH.esc(login)}"><img src="${GH.brandLogo}" alt="" width="${size}" height="${size}" decoding="async"></span>`;
+    }
     const h = hash(login || '?');
     const color = palette[h % palette.length];
     // identicon-ish 5x5 symmetric pattern

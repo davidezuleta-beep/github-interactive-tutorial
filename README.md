@@ -32,6 +32,7 @@ js/tour/engine.js       Motor del recorrido
 js/tour/narration.js    🔊 GUIONES DE VOZ y lista de audios disponibles
 js/tour/voice.js        Reproductor de la voz
 audio/                  Audios MP3 de la narración (ElevenLabs)
+assets/biniac-logo.png  Logo de Biniac (foto de perfil y organización)
 ```
 
 ## Cómo actualizar o ampliar el tutorial
@@ -86,4 +87,5 @@ El sitio se publica con GitHub Pages desde la rama `main` (carpeta raíz). Cualq
 - Iconos: [Octicons](https://github.com/primer/octicons) — MIT License, © GitHub Inc. (ver `OCTICONS-LICENSE.txt`).
 - Colores: [Primer Primitives](https://github.com/primer/primitives) — MIT License.
 - Tipografía: Mona Sans (SIL Open Font License), servida por Google Fonts, con tipografías del sistema como respaldo.
+- Logo de Biniac (`assets/biniac-logo.png`): © Biniac, usado por la propia Biniac para firmar la experiencia. Aparece como foto de perfil de la cuenta de práctica y en su perfil (empresa y organización). Para cambiarlo, reemplaza ese archivo o la constante `GH.brandLogo` de `js/util.js`.
 - Todos los usuarios, organizaciones y proyectos del simulador son ficticios.

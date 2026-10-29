@@ -108,9 +108,9 @@
       body: `<div class="intro-voice">${GH.icon('unmute', 24)}<div><strong>Sube el volumen: tu guía te va a hablar.</strong><span>Si no escuchas nada, pulsa ${GH.icon('play')} arriba a la derecha. Puedes apagar la voz cuando quieras.</span></div></div>
         <p>GitHub es un sitio web donde personas y equipos <strong>guardan sus proyectos</strong>, ven <strong>cómo cambian</strong> con el tiempo y <strong>trabajan juntos</strong> sin pisarse.</p>
         <div class="intro-cards">
-          <div class="intro-card"><span class="ic" style="background:#1f6feb">${GH.icon('file-directory', 24)}</span><strong>Una carpeta en la nube</strong><span>Como Google Drive o OneDrive, pero pensada para proyectos.</span></div>
-          <div class="intro-card"><span class="ic" style="background:#8957e5">${GH.icon('history', 24)}</span><strong>Con máquina del tiempo</strong><span>Guarda cada versión: puedes ver qué cambió, quién y cuándo.</span></div>
-          <div class="intro-card"><span class="ic" style="background:#238636">${GH.icon('people', 24)}</span><strong>Y un sistema de propuestas</strong><span>Cada quien sugiere cambios y el equipo decide cuáles se aceptan.</span></div>
+          <div class="intro-card"><span class="ic">${GH.icon('file-directory', 24)}</span><strong>Una carpeta en la nube</strong><span>Como Google Drive o OneDrive, pero pensada para proyectos.</span></div>
+          <div class="intro-card"><span class="ic">${GH.icon('history', 24)}</span><strong>Con máquina del tiempo</strong><span>Guarda cada versión: puedes ver qué cambió, quién y cuándo.</span></div>
+          <div class="intro-card"><span class="ic">${GH.icon('people', 24)}</span><strong>Y un sistema de propuestas</strong><span>Cada quien sugiere cambios y el equipo decide cuáles se aceptan.</span></div>
         </div>`
     },
     {
