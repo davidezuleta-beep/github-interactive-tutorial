@@ -177,3 +177,21 @@
 
 .tour-bubble.corner.corner-left { right: auto; left: 24px !important; }
 .ti-foot { position: sticky; bottom: -24px; background: #161b22; padding: 12px 0 4px; margin-bottom: -4px; box-shadow: 0 -12px 16px -8px #161b22; z-index: 1; }
+
+/* ---- Voice narration ---- */
+.tb-voice { position: relative; gap: 4px; padding: 0 6px; height: 26px; color: #79c0ff; }
+.tb-voice .octicon { color: #79c0ff; }
+.tb-voice .vb { display: none; align-items: flex-end; gap: 2px; height: 12px; }
+.tb-voice .vb i { width: 3px; background: #79c0ff; border-radius: 2px; animation: vbars 0.9s ease-in-out infinite; }
+.tb-voice .vb i:nth-child(2) { animation-delay: .15s; } .tb-voice .vb i:nth-child(3) { animation-delay: .3s; }
+.tb-voice.speaking .vb { display: inline-flex; }
+@keyframes vbars { 0%,100% { height: 3px; } 50% { height: 12px; } }
+.tour-bubble.is-speaking .tb-avatar { box-shadow: 0 0 0 3px #4493f855; animation: avatarTalk 1.2s ease-in-out infinite; }
+@keyframes avatarTalk { 50% { box-shadow: 0 0 0 6px #4493f822; } }
+.td-voice[aria-pressed="false"] { color: var(--fgColor-muted); }
+.td-voice[aria-pressed="true"] .octicon { color: #79c0ff; }
+.ti-voice { display: inline-flex; gap: 4px; align-items: center; margin-right: 12px; }
+.intro-voice { display: flex; gap: 12px; align-items: center; padding: 12px 14px; margin-bottom: 14px; border-radius: 12px; background: var(--bgColor-accent-muted); border: 1px solid #1f6feb88; font-size: 14px; }
+.intro-voice > .octicon { color: #79c0ff; flex-shrink: 0; }
+.intro-voice span { display: block; color: #d1d9e0; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .tb-voice .vb i, .tour-bubble.is-speaking .tb-avatar { animation: none; } }

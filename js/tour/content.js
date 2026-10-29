@@ -81,6 +81,7 @@
       <div class="hd-bubble"><div class="hd-guide">${GH.icon('mortar-board', 12)} Tu guía</div><strong>¡A crearlo!</strong><div>👉 Haz clic en <b>Create repository</b>.</div></div>
     </div>
     <ol class="howto-list">
+      <li><span class="hl-ic">${GH.icon('unmute')}</span><span><strong>Escucha a tu guía.</strong> Te habla en cada paso, te explica y te invita a actuar. Con el botón ${GH.icon('play')} del globo repites lo que dijo; con <strong>Voz</strong> en la barra la apagas o la enciendes.</span></li>
       <li><span class="hl-ic">${GH.icon('comment')}</span><span><strong>Lee el globo.</strong> Te explica cada parte de GitHub y te dice qué hacer. Las instrucciones empiezan con 👉.</span></li>
       <li><span class="hl-ic hl-ring"></span><span><strong>Haz clic en lo que tiene borde azul brillante.</strong> Es el botón o la zona que debes usar en ese paso.</span></li>
       <li><span class="hl-ic">${GH.icon('arrow-right')}</span><span>Si el paso es solo para leer, pulsa <strong>Continuar</strong>.</span></li>
@@ -96,6 +97,7 @@
       <div class="hdk-row"><span class="hdk-k">${GH.icon('list-unordered')} Índice</span><span>muestra los 8 módulos para saltar a cualquiera.</span></div>
       <div class="hdk-row"><span class="hdk-k">${GH.icon('book')} Glosario</span><span>todas las palabras nuevas con su significado.</span></div>
       <div class="hdk-row"><span class="hdk-k">${GH.icon('question')} Ayuda</span><span>vuelve a mostrar estas instrucciones.</span></div>
+      <div class="hdk-row"><span class="hdk-k">${GH.icon('unmute')} Voz</span><span>enciende o apaga la narración de la guía.</span></div>
       <div class="hdk-row"><span class="hdk-k">Explorar libre</span><span>sales del recorrido y navegas a tu ritmo; puedes volver cuando quieras.</span></div>
     </div>`;
 
@@ -103,7 +105,8 @@
   const intro = [
     {
       icon: 'mortar-board', title: '¡Bienvenido a tu práctica de GitHub!',
-      body: `<p>GitHub es un sitio web donde personas y equipos <strong>guardan sus proyectos</strong>, ven <strong>cómo cambian</strong> con el tiempo y <strong>trabajan juntos</strong> sin pisarse.</p>
+      body: `<div class="intro-voice">${GH.icon('unmute', 24)}<div><strong>Sube el volumen: tu guía te va a hablar.</strong><span>Si no escuchas nada, pulsa ${GH.icon('play')} arriba a la derecha. Puedes apagar la voz cuando quieras.</span></div></div>
+        <p>GitHub es un sitio web donde personas y equipos <strong>guardan sus proyectos</strong>, ven <strong>cómo cambian</strong> con el tiempo y <strong>trabajan juntos</strong> sin pisarse.</p>
         <div class="intro-cards">
           <div class="intro-card"><span class="ic" style="background:#1f6feb">${GH.icon('file-directory', 24)}</span><strong>Una carpeta en la nube</strong><span>Como Google Drive o OneDrive, pero pensada para proyectos.</span></div>
           <div class="intro-card"><span class="ic" style="background:#8957e5">${GH.icon('history', 24)}</span><strong>Con máquina del tiempo</strong><span>Guarda cada versión: puedes ver qué cambió, quién y cuándo.</span></div>

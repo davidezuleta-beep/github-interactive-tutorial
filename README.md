@@ -10,6 +10,7 @@ Simulador educativo para que personas sin conocimientos técnicos aprendan a usa
 - **8 módulos guiados** (108 pasos): Dashboard, repositorios, explorar un proyecto, subir archivos y commits, ramas, pull requests y merge, seguridad y administración, y exploración libre.
 - **Globos contextuales** con resaltado del elemento, **pistas** cuando se hace clic en el lugar equivocado, y botones **Atrás**, **Repetir paso**, **Repetir módulo** y **Reiniciar todo**.
 - **Glosario de 44 términos** enlazado automáticamente: cada palabra nueva se puede pulsar para ver su significado.
+- **Narración con voz** (ElevenLabs): la guía habla en la bienvenida y en cada paso de los módulos 1 a 3, da pistas en voz alta y felicita al terminar. Se puede pausar, repetir o apagar con el botón **Voz**.
 - **Exploración libre** con 7 **retos** que se marcan solos, glosario y acceso al índice de módulos.
 - **Simulación funcional**: crear repositorios, subir archivos (de ejemplo o propios, que nunca salen del equipo), editar archivos, commits e historial, ver versiones antiguas, ramas, comparar, pull requests, merge, borrar ramas, issues, comentarios, estrellas, forks, cambiar visibilidad, renombrar, invitar colaboradores y roles.
 
@@ -28,6 +29,9 @@ js/router.js            Navegación por #/rutas
 js/views-*.js           Pantallas (inicio, código, historial, pull requests, configuración…)
 js/tour/content.js      ✏️ TEXTOS DEL RECORRIDO: bienvenida, módulos, pasos, glosario y retos
 js/tour/engine.js       Motor del recorrido
+js/tour/narration.js    🔊 GUIONES DE VOZ y lista de audios disponibles
+js/tour/voice.js        Reproductor de la voz
+audio/                  Audios MP3 de la narración (ElevenLabs)
 ```
 
 ## Cómo actualizar o ampliar el tutorial
@@ -56,6 +60,8 @@ Para resaltar un elemento nuevo, agrégale `data-tour="nombre"` en la vista corr
 **Glosario.** Cada entrada de `glossary` es `{ k: 'clave', t: 'Término', d: 'Definición', a: ['variantes', 'que se enlazan'] }`. Todas las variantes (`a`) se convierten automáticamente en enlaces (subrayado punteado) en los globos, los resúmenes, los retos y las definiciones del propio glosario. Una variante con mayúsculas solo se enlaza si coincide exactamente (por ejemplo `PR`, `Settings`); en minúsculas, sin importar mayúsculas. El glosario indica solo en qué módulo aparece cada término por primera vez.
 
 **Instrucciones de uso.** El texto «Cómo usar este tutorial» (diapositiva de bienvenida y botón **Ayuda** de la barra) está en la constante `howTo` de `js/tour/content.js`.
+
+**Narración con voz.** La guía habla con voces de ElevenLabs (voz *Mariana*, `voice_id` `GUeHs6BPO7Btpp3ZjcQH`, modelo `eleven_v4`). Los guiones están en `js/tour/narration.js`: cada línea es `[clave, archivo, texto]`, donde la clave es `'<id del módulo>:<título exacto del paso>'` (o `intro:N`, `done:<módulo>`, `hint:N`, `cheer:N`). El audio va en `audio/<archivo>.mp3`. Para activar un audio nuevo: genera el MP3 con el mismo texto y la misma voz, guárdalo en `audio/` y añade su nombre de archivo a la lista `ready` de `narration.js`. Los pasos sin audio funcionan solo con texto y no muestran el botón de voz. Si cambias el título de un paso, actualiza también su clave en `narration.js`. La persona puede apagar la voz con el botón **Voz** de la barra (se recuerda en su navegador).
 
 **Retos.** Edita `challenges` (`[título, descripción, función que devuelve true cuando se cumple]`).
 
