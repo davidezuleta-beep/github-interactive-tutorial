@@ -3,12 +3,13 @@
   'use strict';
   const { esc, icon, avatar } = GH;
   const S = () => GH.store;
+  const L = GH.L;
   const V = GH.views;
   const A = GH.actions;
 
   function greeting() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; }
   function repoIcon(r) { return icon(r.visibility === 'private' ? 'lock' : 'repo'); }
-  function visLabel(r) { return `<span class="Label">${r.visibility === 'private' ? 'Private' : 'Public'}</span>`; }
+  function visLabel(r) { return `<span class="Label">${r.visibility === 'private' ? L.private : L.public}</span>`; }
 
   // ---------------- Dashboard ----------------
   V.dashboard = function () {
@@ -21,14 +22,14 @@
     const explore = S().visibleRepos().filter(r => r.owner !== u.login);
     const side = `<aside class="dashboard-side" aria-label="Dashboard sidebar">
       <nav class="navlist" aria-label="Dashboard">
-        <a class="navlist-item selected" href="#/" aria-current="page">${icon('home')}<span>Home</span></a>
+        <a class="navlist-item selected" href="#/" aria-current="page">${icon('home')}<span>${L.home}</span></a>
         <button class="navlist-item" data-action="notsim" data-what="Feed">${icon('globe')}<span>Feed</span></button>
       </nav>
       <div class="navlist-divider" style="margin:16px 0"></div>
       <div data-tour="top-repos">
         <div class="navlist-heading"><span>Top repositories</span><span class="flex gap-1"><button class="btn btn-primary btn-sm" data-nav="#/new" data-tour="side-new-repo">${icon('repo')} New</button></span></div>
         ${mine.length ? `<div class="navlist" style="margin-top:8px">${mine.slice(0, 8).map(r => `<a class="repo-list-item ${fresh === S().key(r) ? 'fresh' : ''}" href="#/${esc(r.owner)}/${esc(r.name)}" data-tour="top-repo-${esc(r.name)}">${avatar(r.owner, 20)}<span class="truncate">${esc(r.owner)}/${esc(r.name)}</span>${r.visibility === 'private' ? icon('lock', 12, 'muted') : ''}</a>`).join('')}</div>`
-        : `<div style="padding:8px"><p class="muted" style="margin-bottom:12px">Create your first project</p><p class="muted f6" style="margin-bottom:12px">Ready to start building? Create a repository for a new idea or bring over an existing repository to keep contributing to it.</p><button class="btn btn-primary btn-sm" data-nav="#/new">${icon('repo')} Create repository</button></div>`}
+        : `<div style="padding:8px"><p class="muted" style="margin-bottom:12px">Create your first project</p><p class="muted f6" style="margin-bottom:12px">Ready to start building? Create a repository for a new idea or bring over an existing repository to keep contributing to it.</p><button class="btn btn-primary btn-sm" data-nav="#/new">${icon('repo')} ${L.createRepo}</button></div>`}
       </div>
     </aside>`;
     const main = `<div class="dashboard-main">
@@ -52,15 +53,15 @@
         <button class="chip" data-action="notsim" data-what="Copilot">${icon('git-branch')} Git ${icon('triangle-down')}</button>
       </div>
       <section class="dash-section">
-        <div class="dash-section-head"><h2>Pull requests</h2><span class="flex gap-2"><a href="#/pulls">View all</a><button class="btn btn-invisible btn-sm btn-icon" data-action="notsim" data-what="Filtros" aria-label="Filter">${icon('filter')}</button></span></div>
+        <div class="dash-section-head"><h2>${L.tabPulls}</h2><span class="flex gap-2"><a href="#/pulls">View all</a><button class="btn btn-invisible btn-sm btn-icon" data-action="notsim" data-what="Filtros" aria-label="Filter">${icon('filter')}</button></span></div>
         <div class="Box">${myPRs.length ? myPRs.slice(0, 4).map(({ r, p }) => `<div class="Box-row hoverable">${prIcon(p)}<div class="flex-1"><a class="link-primary bold" href="#/${esc(r.owner)}/${esc(r.name)}/pull/${p.number}">${esc(p.title)}</a><div class="muted f6">${esc(r.owner)}/${esc(r.name)} #${p.number} · ${GH.timeAgo(p.createdAt)}</div></div></div>`).join('') : `<div class="Box-row muted" style="justify-content:center;padding:24px">No pull requests found, try a different filter.</div>`}</div>
       </section>
       <section class="dash-section" data-tour="explore-repos">
         <div class="dash-section-head"><h2>Explore repositories</h2><a href="#/explore">Explore more →</a></div>
-        <div class="feed-card">${explore.map(r => `<div class="feed-item">${avatar(r.owner, 32, true)}<div class="flex-1"><a class="link-primary bold" href="#/${esc(r.owner)}/${esc(r.name)}">${esc(r.owner)}/${esc(r.name)}</a><p class="muted" style="margin:4px 0">${esc(r.description)}</p><span class="muted f6 flex gap-3"><span class="flex gap-1">${icon('star')} ${r.stars}</span><span class="flex gap-1"><span class="lang-dot" style="background:#083fa1"></span> Markdown</span><span>Updated ${GH.timeAgo(S().pushedAt(r))}</span></span></div><button class="btn btn-sm" data-action="starRepo" data-repo="${esc(S().key(r))}">${icon(r.starred ? 'star-fill' : 'star', 16, r.starred ? 'color-attention' : '')} ${r.starred ? 'Starred' : 'Star'}</button></div>`).join('')}</div>
+        <div class="feed-card">${explore.map(r => `<div class="feed-item">${avatar(r.owner, 32, true)}<div class="flex-1"><a class="link-primary bold" href="#/${esc(r.owner)}/${esc(r.name)}">${esc(r.owner)}/${esc(r.name)}</a><p class="muted" style="margin:4px 0">${esc(r.description)}</p><span class="muted f6 flex gap-3"><span class="flex gap-1">${icon('star')} ${r.stars}</span><span class="flex gap-1"><span class="lang-dot" style="background:#083fa1"></span> Markdown</span><span>Updated ${GH.timeAgo(S().pushedAt(r))}</span></span></div><button class="btn btn-sm" data-action="starRepo" data-repo="${esc(S().key(r))}">${icon(r.starred ? 'star-fill' : 'star', 16, r.starred ? 'color-attention' : '')} ${r.starred ? L.starred : L.star}</button></div>`).join('')}</div>
       </section>
     </div>`;
-    return { header: { title: 'Dashboard' }, title: 'Dashboard', html: `<div class="dashboard">${side}${main}</div>`, noFooter: false, after() { if (fresh) setTimeout(() => { S().state.tutorial.freshRepo = null; }, 5000); } };
+    return { header: { title: L.dashboard }, title: L.dashboard, html: `<div class="dashboard">${side}${main}</div>`, noFooter: false, after() { if (fresh) setTimeout(() => { S().state.tutorial.freshRepo = null; }, 5000); } };
   };
   A.copilotAsk = () => GH.ui.notSimulated('Copilot (asistente de IA)');
   A.starRepo = (el) => { const r = S().state.repos[el.getAttribute('data-repo')]; if (r) { S().toggleStar(r); GH.ui.toast(r.starred ? `Marcaste <strong>${esc(r.name)}</strong> con una estrella ⭐` : 'Estrella retirada', r.starred ? '' : 'info'); GH.render(); } };
@@ -81,30 +82,30 @@
     if (!nr) resetNR();
     const me = S().me();
     return {
-      header: { title: 'New repository' }, title: 'New repository',
+      header: { title: L.newRepo }, title: L.newRepo,
       html: `<div class="newrepo" data-tour="new-repo-form">
         <h1>Create a new repository</h1>
         <p class="muted">Repositories contain a project's files and version history. Have a project elsewhere? <a href="#" data-action="notsim" data-what="Import a repository">Import a repository</a>.</p>
         <p class="muted"><em>Required fields are marked with an asterisk (*).</em></p>
         <div class="step-section"><span class="step-num">1</span><h2>General</h2>
           <div class="flex gap-2" style="align-items:flex-start">
-            <div><label class="form-label">Owner *</label><button class="btn" data-action="notsim" data-what="Cambiar de propietario (organizaciones)">${avatar(me, 20)} ${esc(me)} ${icon('triangle-down')}</button></div>
+            <div><label class="form-label">${L.owner} *</label><button class="btn" data-action="notsim" data-what="Cambiar de propietario (organizaciones)">${avatar(me, 20)} ${esc(me)} ${icon('triangle-down')}</button></div>
             <div style="font-size:24px;padding-top:28px;color:var(--fgColor-muted)">/</div>
-            <div class="flex-1"><label class="form-label" for="nr-name">Repository name *</label><input id="nr-name" class="form-control" value="${esc(nr.name)}" data-oninput="nrName" data-tour="nr-name" autocomplete="off" aria-describedby="nr-name-status"><div id="nr-name-status"></div></div>
+            <div class="flex-1"><label class="form-label" for="nr-name">${L.repoName} *</label><input id="nr-name" class="form-control" value="${esc(nr.name)}" data-oninput="nrName" data-tour="nr-name" autocomplete="off" aria-describedby="nr-name-status"><div id="nr-name-status"></div></div>
           </div>
           <p class="muted" style="margin-top:12px">Great repository names are short and memorable. How about <button class="btn-link" style="color:var(--fgColor-success);font-weight:600" data-action="nrSuggest">${esc(nr.suggestion)}</button>?</p>
-          <div class="mt-3"><label class="form-label" for="nr-desc" style="font-weight:400">Description</label><input id="nr-desc" class="form-control" maxlength="350" value="${esc(nr.description)}" data-oninput="nrDesc" data-tour="nr-desc"><div class="form-hint" id="nr-desc-count">${nr.description.length} / 350 characters</div></div>
+          <div class="mt-3"><label class="form-label" for="nr-desc" style="font-weight:400">${L.description}</label><input id="nr-desc" class="form-control" maxlength="350" value="${esc(nr.description)}" data-oninput="nrDesc" data-tour="nr-desc"><div class="form-hint" id="nr-desc-count">${nr.description.length} / 350 characters</div></div>
         </div>
         <div class="step-section"><span class="step-num">2</span><h2>Configuration</h2>
           <div class="config-box">
-            <div class="config-row" data-tour="nr-visibility"><div class="txt"><strong>Choose visibility *</strong><span>Choose who can see and commit to this repository</span></div><button class="btn" data-action="nrVisMenu" data-tour="nr-vis-btn" aria-haspopup="true">${icon(nr.visibility === 'private' ? 'lock' : 'repo')} ${nr.visibility === 'private' ? 'Private' : 'Public'} ${icon('triangle-down')}</button></div>
+            <div class="config-row" data-tour="nr-visibility"><div class="txt"><strong>Choose visibility *</strong><span>Choose who can see and commit to this repository</span></div><button class="btn" data-action="nrVisMenu" data-tour="nr-vis-btn" aria-haspopup="true">${icon(nr.visibility === 'private' ? 'lock' : 'repo')} ${nr.visibility === 'private' ? L.private : L.public} ${icon('triangle-down')}</button></div>
             <div class="config-row"><div class="txt"><strong>Start with a template</strong><span>Templates pre-configure your repository with files.</span></div><button class="btn" data-action="notsim" data-what="Plantillas de repositorio">No template ${icon('triangle-down')}</button></div>
-            <div class="config-row" data-tour="nr-readme"><div class="txt"><strong>Add README</strong><span>READMEs can be used as longer descriptions. <a href="#" data-action="notsim" data-what="Documentación sobre READMEs">About READMEs</a></span></div><button class="toggle" role="switch" aria-checked="${nr.readme}" data-action="nrReadme" data-tour="nr-readme-toggle" aria-label="Add README"><span>${nr.readme ? 'On' : 'Off'}</span><span class="knob-track"><span class="knob"></span></span></button></div>
+            <div class="config-row" data-tour="nr-readme"><div class="txt"><strong>${L.addReadme}</strong><span>READMEs can be used as longer descriptions. <a href="#" data-action="notsim" data-what="Documentación sobre READMEs">About READMEs</a></span></div><button class="toggle" role="switch" aria-checked="${nr.readme}" data-action="nrReadme" data-tour="nr-readme-toggle" aria-label="${L.addReadme}"><span>${nr.readme ? 'On' : 'Off'}</span><span class="knob-track"><span class="knob"></span></span></button></div>
             <div class="config-row"><div class="txt"><strong>Add .gitignore</strong><span>.gitignore tells git which files not to track.</span></div><button class="btn" data-action="nrGitignore">${nr.gitignore ? esc(nr.gitignore) : 'No .gitignore'} ${icon('triangle-down')}</button></div>
             <div class="config-row"><div class="txt"><strong>Add license</strong><span>Licenses explain how others can use your code.</span></div><button class="btn" data-action="nrLicense">${nr.license ? esc(nr.license) : 'No license'} ${icon('triangle-down')}</button></div>
           </div>
         </div>
-        <div class="flex mt-4" style="justify-content:flex-end"><button class="btn btn-primary" data-action="nrCreate" data-tour="nr-create" ${validName().ok ? '' : 'disabled'}>Create repository</button></div>
+        <div class="flex mt-4" style="justify-content:flex-end"><button class="btn btn-primary" data-action="nrCreate" data-tour="nr-create" ${validName().ok ? '' : 'disabled'}>${L.createRepo}</button></div>
       </div>`,
       after() { updateNameStatus(); }
     };
@@ -130,8 +131,8 @@
   A.nrSuggest = () => { nr.name = nr.suggestion; GH.render(); GH.bus.emit('form:input'); };
   A.nrVisMenu = (el) => {
     GH.ui.openMenu(el, `<ul class="ActionList">
-      ${GH.ui.menuItem({ icon: 'repo', label: 'Public', desc: 'Anyone on the internet can see this repository. You choose who can commit.', action: 'nrSetVis', data: 'data-v="public"', checked: nr.visibility === 'public', tour: 'nr-vis-public' })}
-      ${GH.ui.menuItem({ icon: 'lock', label: 'Private', desc: 'You choose who can see and commit to this repository.', action: 'nrSetVis', data: 'data-v="private"', checked: nr.visibility === 'private', tour: 'nr-vis-private' })}
+      ${GH.ui.menuItem({ icon: 'repo', label: L.public, desc: 'Anyone on the internet can see this repository. You choose who can commit.', action: 'nrSetVis', data: 'data-v="public"', checked: nr.visibility === 'public', tour: 'nr-vis-public' })}
+      ${GH.ui.menuItem({ icon: 'lock', label: L.private, desc: 'You choose who can see and commit to this repository.', action: 'nrSetVis', data: 'data-v="private"', checked: nr.visibility === 'private', tour: 'nr-vis-private' })}
     </ul>`, { align: 'right', width: 320, id: 'nr-vis', tour: 'nr-vis-menu' });
   };
   A.nrSetVis = (el) => { nr.visibility = el.getAttribute('data-v'); GH.ui.closeMenus(); GH.render(); GH.bus.emit('nr:visibility', nr.visibility); };
@@ -160,14 +161,14 @@
     const tab = rt.query.tab || 'overview';
     const repos = S().reposOf(login);
     const starred = S().visibleRepos().filter(r => r.starred);
-    const tabs = [['overview', 'book', 'Overview'], ['repositories', 'repo', 'Repositories', repos.length], ['projects', 'table', 'Projects'], ['packages', 'package', 'Packages'], ['stars', 'star', 'Stars', isMe ? starred.length : 0]];
+    const tabs = [['overview', 'book', 'Overview'], ['repositories', 'repo', L.repositories, repos.length], ['projects', 'table', L.tabProjects], ['packages', 'package', 'Packages'], ['stars', 'star', 'Stars', isMe ? starred.length : 0]];
     let body = '';
     if (tab === 'repositories' || tab === 'stars') {
       const list = tab === 'stars' ? starred : repos;
       const q = (rt.query.q || '').toLowerCase();
       const filtered = list.filter(r => !q || r.name.toLowerCase().includes(q));
       body = `<div class="flex gap-2" style="padding-bottom:16px;border-bottom:1px solid var(--borderColor-muted)"><input class="form-control" placeholder="Find a repository…" value="${esc(rt.query.q || '')}" data-onenter="profileFilter" data-tab="${tab}" aria-label="Find a repository" style="flex:1"><button class="btn">Type ${icon('triangle-down')}</button><button class="btn">Sort ${icon('triangle-down')}</button>${isMe && tab === 'repositories' ? `<button class="btn btn-primary" data-nav="#/new">${icon('repo')} New</button>` : ''}</div>
-        ${filtered.length ? filtered.map(r => `<div class="repo-row" data-tour="profile-repo-${esc(r.name)}"><div class="flex gap-2"><a class="f4 bold" href="#/${esc(r.owner)}/${esc(r.name)}">${tab === 'stars' ? esc(r.owner) + ' / ' : ''}${esc(r.name)}</a>${visLabel(r)}<button class="btn btn-sm ml-auto" data-action="starRepo" data-repo="${esc(S().key(r))}">${icon(r.starred ? 'star-fill' : 'star')} ${r.starred ? 'Starred' : 'Star'}</button></div>${r.description ? `<p class="muted mt-2">${esc(r.description)}</p>` : ''}<div class="muted f6 mt-2 flex gap-3"><span class="flex gap-1"><span class="lang-dot" style="background:#083fa1"></span> Markdown</span>${r.stars ? `<span class="flex gap-1">${icon('star')} ${r.stars}</span>` : ''}<span>Updated ${GH.timeAgo(S().pushedAt(r))}</span></div></div>`).join('') : `<div class="blankslate">${icon(tab === 'stars' ? 'star' : 'repo', 24)}<h3>${tab === 'stars' ? (isMe ? 'Create your first list' : 'No starred repositories') : `${esc(login)} doesn’t have any repositories ${q ? 'that match' : 'yet'}.`}</h3>${tab === 'stars' ? '<p>Marca repositorios con ⭐ Star para guardarlos aquí.</p>' : ''}</div>`}`;
+        ${filtered.length ? filtered.map(r => `<div class="repo-row" data-tour="profile-repo-${esc(r.name)}"><div class="flex gap-2"><a class="f4 bold" href="#/${esc(r.owner)}/${esc(r.name)}">${tab === 'stars' ? esc(r.owner) + ' / ' : ''}${esc(r.name)}</a>${visLabel(r)}<button class="btn btn-sm ml-auto" data-action="starRepo" data-repo="${esc(S().key(r))}">${icon(r.starred ? 'star-fill' : 'star')} ${r.starred ? L.starred : L.star}</button></div>${r.description ? `<p class="muted mt-2">${esc(r.description)}</p>` : ''}<div class="muted f6 mt-2 flex gap-3"><span class="flex gap-1"><span class="lang-dot" style="background:#083fa1"></span> Markdown</span>${r.stars ? `<span class="flex gap-1">${icon('star')} ${r.stars}</span>` : ''}<span>Updated ${GH.timeAgo(S().pushedAt(r))}</span></div></div>`).join('') : `<div class="blankslate">${icon(tab === 'stars' ? 'star' : 'repo', 24)}<h3>${tab === 'stars' ? (isMe ? 'Create your first list' : 'No starred repositories') : `${esc(login)} doesn’t have any repositories ${q ? 'that match' : 'yet'}.`}</h3>${tab === 'stars' ? '<p>Marca repositorios con ⭐ Star para guardarlos aquí.</p>' : ''}</div>`}`;
     } else if (tab === 'overview') {
       const pop = repos.slice(0, 6);
       body = `<h2 class="f4" style="font-weight:400;margin-bottom:8px">${repos.length ? 'Popular repositories' : ''}</h2>
@@ -227,13 +228,13 @@
     return {
       header: { title: 'Search' }, title: 'Search: ' + q,
       html: `<div class="list-layout"><aside class="list-side"><div class="navlist-heading">Filter by</div><div class="navlist">
-        <button class="navlist-item selected">${icon('repo')}<span class="flex-1">Repositories</span><span class="Counter">${res.length}</span></button>
+        <button class="navlist-item selected">${icon('repo')}<span class="flex-1">${L.repositories}</span><span class="Counter">${res.length}</span></button>
         <button class="navlist-item" data-action="notsim" data-what="Búsqueda de código">${icon('code')}<span>Code</span></button>
-        <button class="navlist-item" data-action="notsim" data-what="Búsqueda de issues">${icon('issue-opened')}<span>Issues</span></button>
-        <button class="navlist-item" data-action="notsim" data-what="Búsqueda de pull requests">${icon('git-pull-request')}<span>Pull requests</span></button>
+        <button class="navlist-item" data-action="notsim" data-what="Búsqueda de issues">${icon('issue-opened')}<span>${L.tabIssues}</span></button>
+        <button class="navlist-item" data-action="notsim" data-what="Búsqueda de pull requests">${icon('git-pull-request')}<span>${L.tabPulls}</span></button>
         <button class="navlist-item" data-action="notsim" data-what="Búsqueda de usuarios">${icon('people')}<span>Users</span></button></div></aside>
         <div class="list-main"><div class="flex mb-3"><h2 class="f4">${res.length} result${res.length === 1 ? '' : 's'}</h2></div>
-        <div class="Box">${res.length ? res.map(r => `<div class="Box-row hoverable" style="align-items:flex-start">${avatar(r.owner, 20, true)}<div class="flex-1"><a class="f4 bold" href="#/${esc(r.owner)}/${esc(r.name)}" data-tour="search-result-${esc(r.name)}">${esc(r.owner)}/${esc(r.name)}</a><p class="muted mt-2">${esc(r.description)}</p><div class="muted f6 mt-2 flex gap-3"><span class="flex gap-1"><span class="lang-dot" style="background:#083fa1"></span> Markdown</span><span class="flex gap-1">${icon('star')} ${r.stars}</span><span>Updated ${GH.timeAgo(S().pushedAt(r))}</span></div></div><button class="btn btn-sm" data-action="starRepo" data-repo="${esc(S().key(r))}">${icon(r.starred ? 'star-fill' : 'star')} ${r.starred ? 'Starred' : 'Star'}</button></div>`).join('') : `<div class="blankslate">${icon('search', 24)}<h3>Your search did not match any repositories</h3><p>Prueba con otra palabra, por ejemplo <em>recetas</em>.</p></div>`}</div></div></div>`
+        <div class="Box">${res.length ? res.map(r => `<div class="Box-row hoverable" style="align-items:flex-start">${avatar(r.owner, 20, true)}<div class="flex-1"><a class="f4 bold" href="#/${esc(r.owner)}/${esc(r.name)}" data-tour="search-result-${esc(r.name)}">${esc(r.owner)}/${esc(r.name)}</a><p class="muted mt-2">${esc(r.description)}</p><div class="muted f6 mt-2 flex gap-3"><span class="flex gap-1"><span class="lang-dot" style="background:#083fa1"></span> Markdown</span><span class="flex gap-1">${icon('star')} ${r.stars}</span><span>Updated ${GH.timeAgo(S().pushedAt(r))}</span></div></div><button class="btn btn-sm" data-action="starRepo" data-repo="${esc(S().key(r))}">${icon(r.starred ? 'star-fill' : 'star')} ${r.starred ? L.starred : L.star}</button></div>`).join('') : `<div class="blankslate">${icon('search', 24)}<h3>Your search did not match any repositories</h3><p>Prueba con otra palabra, por ejemplo <em>recetas</em>.</p></div>`}</div></div></div>`
     };
   };
 
@@ -254,16 +255,16 @@
     items.sort((a, b) => b.x.createdAt - a.x.createdAt);
     const ic = kind === 'pulls' ? 'git-pull-request' : 'issue-opened';
     return `<div class="list-layout"><aside class="list-side"><div class="navlist">
-      <button class="navlist-item selected">${icon(ic)}<span>${kind === 'pulls' ? 'Pull requests' : 'Issues'}</span></button>
+      <button class="navlist-item selected">${icon(ic)}<span>${kind === 'pulls' ? L.tabPulls : L.tabIssues}</span></button>
       <button class="navlist-item" data-action="notsim" data-what="Filtro">${icon('smiley')}<span>Created by me</span></button>
       <button class="navlist-item" data-action="notsim" data-what="Filtro">${icon('person')}<span>Assigned to me</span></button>
       <button class="navlist-item" data-action="notsim" data-what="Filtro">${icon('mention')}<span>Mentioned</span></button></div></aside>
-      <div class="list-main"><h1 class="page-title bold mb-3" style="font-size:20px;font-weight:600">${kind === 'pulls' ? 'Pull requests' : 'Issues'}</h1>
+      <div class="list-main"><h1 class="page-title bold mb-3" style="font-size:20px;font-weight:600">${kind === 'pulls' ? L.tabPulls : L.tabIssues}</h1>
       <div class="Box"><div class="list-head"><span class="tog selected">${icon(ic)} Open <span class="Counter">${items.filter(i => i.x.state === 'open').length}</span></span></div>
       ${items.length ? items.map(({ r, x }) => `<div class="list-row">${kind === 'pulls' ? prIcon(x) : icon(x.state === 'open' ? 'issue-opened' : 'issue-closed', 16, x.state === 'open' ? 'color-success' : 'color-done')}<div class="flex-1"><a class="t" href="#/${esc(r.owner)}/${esc(r.name)}/${kind === 'pulls' ? 'pull' : 'issues'}/${x.number}">${esc(x.title)}</a><div class="s">${esc(r.owner)}/${esc(r.name)}#${x.number} · opened ${GH.timeAgo(x.createdAt)} by ${esc(x.author)}</div></div></div>`).join('') : `<div class="blankslate">${icon(ic, 24)}<h3>No results matched your search</h3><p>Cuando abras ${kind === 'pulls' ? 'pull requests' : 'issues'} en tus repositorios aparecerán aquí.</p></div>`}</div></div></div>`;
   }
-  V.globalIssues = () => ({ header: { title: 'Issues' }, title: 'Issues', html: globalList('issues') });
-  V.globalPulls = () => ({ header: { title: 'Pull requests' }, title: 'Pull requests', html: globalList('pulls') });
+  V.globalIssues = () => ({ header: { title: L.tabIssues }, title: L.tabIssues, html: globalList('issues') });
+  V.globalPulls = () => ({ header: { title: L.tabPulls }, title: L.tabPulls, html: globalList('pulls') });
 
   // ---------------- 404 ----------------
   V.notFound = function (rt) {

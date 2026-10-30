@@ -24,18 +24,56 @@ css/github.css          Componentes con aspecto de GitHub
 css/tour.css            Capa educativa (globos, barra de progreso, panel, bienvenida)
 js/icons.js             Subconjunto de Octicons (licencia MIT)
 js/util.js              Utilidades: eventos, Markdown, diffs, fechas, almacenamiento
+js/labels.js            ✏️ NOMBRES DE GITHUB: fuente única de botones, pestañas y secciones
 js/store.js             Datos simulados (repositorios, ramas, commits, PR…) y datos de ejemplo
 js/ui.js                Encabezado, menús, diálogos, buscador, avisos
 js/router.js            Navegación por #/rutas
 js/views-*.js           Pantallas (inicio, código, historial, pull requests, configuración…)
 js/tour/content.js      ✏️ TEXTOS DEL RECORRIDO: bienvenida, módulos, pasos, glosario y retos
 js/tour/engine.js       Motor del recorrido
-js/tour/narration.js    🔊 GUIONES DE VOZ y lista de audios disponibles
+js/tour/narration.js    🔊 GUIONES DE VOZ
+js/tour/voice-manifest.js  Huella del texto de cada audio (la genera tools/voice.mjs)
 js/tour/game.js         🏆 Motor de gamificación (puntos, niveles, insignias, desafíos, premio)
 js/tour/voice.js        Reproductor de la voz
 audio/                  Audios MP3 de la narración (ElevenLabs)
 assets/biniac-logo.png  Logo de Biniac (foto de perfil y organización)
+tools/check.mjs         Revisión automática del tutorial (ejecutar antes de publicar)
+tools/voice.mjs         Estado y regeneración de los audios
+tools/bump-version.py   Versión nueva de los archivos (evita la caché)
 ```
+
+## Si GitHub cambia su interfaz
+
+El tutorial está pensado para que estos cambios sean rápidos y baratos:
+
+| Qué cambió en GitHub | Qué hacer |
+|---|---|
+| Un botón, una pestaña o una sección **cambió de nombre** | Cambia el texto en `js/labels.js` (una línea). Se actualizan solas las pantallas, los globos, el glosario y los guiones de voz. Revisa la traducción entre paréntesis que acompaña al nombre en los globos, si la hay. Después ejecuta `node tools/voice.mjs` para ver qué audios hay que regenerar. |
+| Algo **cambió de lugar, de color o de forma** | Ajusta solo la pantalla correspondiente en `js/views-*.js`. El recorrido encuentra el elemento por su marca `data-tour`, así que los textos y la voz no cambian. |
+| Cambió **cómo se hace algo** (más o menos pasos) | Edita los pasos del módulo en `js/tour/content.js` y sus guiones en `js/tour/narration.js`. Cada paso nuevo necesita un `id` fijo. |
+
+Antes de publicar, en este orden:
+
+```
+node tools/check.mjs          # revisa ids, etiquetas, guiones y elementos resaltados
+node tools/voice.mjs          # dice qué audios están desactualizados o faltan, y cuántos créditos costaría
+python3 tools/bump-version.py # versión nueva para que los navegadores no usen archivos viejos
+```
+
+**Etiquetas (`js/labels.js`).** Cada nombre visible de GitHub se escribe una sola vez: `addPeople: 'Add people'`. Las pantallas lo usan como `L.addPeople`; los textos del recorrido y los guiones de voz, como `{{addPeople}}`. Algunas etiquetas aceptan un dato: `{{addToRepo:carlos-demo}}` → «Add carlos-demo to this repository». Si escribes una clave que no existe, `tools/check.mjs` lo avisa.
+
+**Identificadores de los pasos.** Cada paso tiene un `id` fijo (por ejemplo `crea-tu-rama`) y su guion de voz se enlaza con `'m5:crea-tu-rama'`. Puedes reescribir el título de un paso sin perder su voz. No cambies un `id` existente.
+
+**Voz con huellas.** Cada audio guarda la huella del texto con que se grabó (en `js/tour/voice-manifest.js`). Si un texto cambia, ya sea porque alguien lo editó o porque cambió una etiqueta, el audio queda desactualizado. Mientras no se regenere, ese paso funciona solo con texto, para no decir algo que ya no coincide con la pantalla.
+
+```
+node tools/voice.mjs                    # estado: al día, desactualizados, faltantes y costo estimado
+ELEVENLABS_API_KEY=xxxx node tools/voice.mjs generate          # regenera solo lo necesario (pregunta antes de gastar)
+node tools/voice.mjs generate --dry-run # muestra qué haría, sin gastar créditos
+node tools/voice.mjs accept m7-14       # marca como al día un audio grabado por otra vía (web de ElevenLabs, etc.)
+```
+
+La clave de ElevenLabs se pasa solo como variable de entorno en el equipo de quien mantiene el tutorial. Nunca se guarda en el proyecto ni llega al sitio. El costo aproximado es de un crédito por carácter. Si la API no reconoce el modelo, usa `--model <id>` con el identificador que muestra ElevenLabs. Se necesita Node 18 o superior.
 
 ## Cómo actualizar o ampliar el tutorial
 
@@ -45,12 +83,13 @@ assets/biniac-logo.png  Logo de Biniac (foto de perfil y organización)
 
 ```js
 {
+  id: 'abre-issues',                  // fijo y único en el módulo
   title: 'Abre la pestaña Issues',
   target: T('tab-issues'),            // elemento con data-tour="tab-issues"
-  body: '👉 Haz clic en <strong>Issues</strong>.',
+  body: '👉 Haz clic en <strong>{{tabIssues}}</strong>.',
   advance: 'click',                   // 'next' | 'click' | { event } | { route } | { check, auto }
   route: /\/issues$/,                 // opcional: también avanza si la dirección coincide
-  hint: 'La pestaña Issues está junto a Code.'
+  hint: 'La pestaña {{tabIssues}} está junto a {{tabCode}}.'
 }
 ```
 
@@ -64,7 +103,7 @@ Para resaltar un elemento nuevo, agrégale `data-tour="nombre"` en la vista corr
 
 **Instrucciones de uso.** El texto «Cómo usar este tutorial» (diapositiva de bienvenida y botón **Ayuda** de la barra) está en la constante `howTo` de `js/tour/content.js`.
 
-**Narración con voz.** La guía habla con voces de ElevenLabs (voz *Mariana*, `voice_id` `GUeHs6BPO7Btpp3ZjcQH`, modelo `eleven_v4`). Los guiones están en `js/tour/narration.js`: cada línea es `[clave, archivo, texto]`, donde la clave es `'<id del módulo>:<título exacto del paso>'` (o `intro:N`, `done:<módulo>`, `hint:N`, `cheer:N`). El audio va en `audio/<archivo>.mp3`. Para activar un audio nuevo: genera el MP3 con el mismo texto y la misma voz, guárdalo en `audio/` y añade su nombre de archivo a la lista `ready` de `narration.js`. Los pasos sin audio funcionan solo con texto y no muestran el botón de voz. Si cambias el título de un paso, actualiza también su clave en `narration.js`. La persona puede apagar la voz con el botón **Voz** de la barra (se recuerda en su navegador).
+**Narración con voz.** La guía habla con voces de ElevenLabs (voz *Mariana*, `voice_id` `GUeHs6BPO7Btpp3ZjcQH`, modelo `eleven_v4`). Los guiones están en `js/tour/narration.js`: cada línea es `[clave, archivo, texto]`. La clave es `'<id del módulo>:<id del paso>'` o una clave especial (`intro:N`, `done:<módulo>`, `hint:N`, `cheer:N`), y el audio va en `audio/<archivo>.mp3`. Para agregar o cambiar un audio, edita el texto y ejecuta `node tools/voice.mjs generate` (ver «Si GitHub cambia su interfaz»). Los pasos sin audio, o con un audio desactualizado, funcionan solo con texto. La persona puede apagar la voz con el botón **Voz** de la barra; la preferencia se recuerda en su navegador.
 
 **Gamificación.** Los valores y textos están en la constante `game` de `js/tour/content.js`:
 - `story` (la narrativa), `guide` (nombre de la guía) y `missions` (una misión por módulo, con nombre e historia).

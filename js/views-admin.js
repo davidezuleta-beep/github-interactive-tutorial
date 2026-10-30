@@ -3,13 +3,14 @@
   'use strict';
   const { esc, icon, avatar } = GH;
   const S = () => GH.store;
+  const L = GH.L;
   const V = GH.views, A = GH.actions;
   const href = (...a) => GH.router.href(...a);
 
   // ---------------- Issues ----------------
   function issueSide(r) {
     return `<aside class="list-side"><div class="navlist">
-      <a class="navlist-item selected" href="${href(r.owner, r.name, 'issues')}">${icon('issue-opened')}<span>Issues</span></a>
+      <a class="navlist-item selected" href="${href(r.owner, r.name, 'issues')}">${icon('issue-opened')}<span>${L.tabIssues}</span></a>
       <button class="navlist-item" data-action="notsim" data-what="Filtro">${icon('person')}<span>Assigned to me</span></button>
       <button class="navlist-item" data-action="notsim" data-what="Filtro">${icon('smiley')}<span>Created by me</span></button>
       <button class="navlist-item" data-action="notsim" data-what="Filtro">${icon('mention')}<span>Mentioned</span></button>
@@ -29,11 +30,11 @@
     const list = (state === 'open' ? open : closed).slice().sort((a, b) => b.number - a.number);
     const base = href(r.owner, r.name, 'issues');
     return {
-      header: { repo: r, tab: 'issues' }, title: `Issues · ${r.owner}/${r.name}`,
+      header: { repo: r, tab: 'issues' }, title: `${L.tabIssues} · ${r.owner}/${r.name}`,
       html: `<div class="list-layout" data-tour="issues-page">${issueSide(r)}<div class="list-main">
-        <div class="flex mb-3"><h1 class="bold" style="font-size:20px">Issues</h1><span class="ml-auto"></span><a class="btn btn-primary" href="${href(r.owner, r.name, 'issues', 'new')}" data-tour="new-issue-btn">New issue</a></div>
+        <div class="flex mb-3"><h1 class="bold" style="font-size:20px">${L.tabIssues}</h1><span class="ml-auto"></span><a class="btn btn-primary" href="${href(r.owner, r.name, 'issues', 'new')}" data-tour="new-issue-btn">New issue</a></div>
         <div class="filterbar"><div class="filter-input"><span class="q"><b>is:</b>issue state:<b>${state}</b></span><span class="ml-auto"></span>${icon('x-circle-fill', 16, 'muted')}</div><button class="btn btn-icon" aria-label="Search">${icon('search')}</button></div>
-        <div class="Box"><div class="list-head"><a class="tog ${state === 'open' ? 'selected' : ''}" href="${base}">Open <span class="Counter">${open.length}</span></a><a class="tog ${state === 'closed' ? 'selected' : ''}" href="${base}?state=closed">Closed <span class="Counter">${closed.length}</span></a><span class="ml-auto flex gap-2"><button class="tog" data-action="notsim" data-what="Filtro por autor">Author ${icon('triangle-down')}</button><button class="tog" data-action="notsim" data-what="Filtro por etiqueta">Labels ${icon('triangle-down')}</button></span></div>
+        <div class="Box"><div class="list-head"><a class="tog ${state === 'open' ? 'selected' : ''}" href="${base}">${L.open} <span class="Counter">${open.length}</span></a><a class="tog ${state === 'closed' ? 'selected' : ''}" href="${base}?state=closed">Closed <span class="Counter">${closed.length}</span></a><span class="ml-auto flex gap-2"><button class="tog" data-action="notsim" data-what="Filtro por autor">Author ${icon('triangle-down')}</button><button class="tog" data-action="notsim" data-what="Filtro por etiqueta">Labels ${icon('triangle-down')}</button></span></div>
         ${list.length ? list.map(i => `<div class="list-row">${icon(i.state === 'open' ? 'issue-opened' : 'issue-closed', 16, i.state === 'open' ? 'color-success' : 'color-done')}<div class="flex-1"><a class="t" href="${href(r.owner, r.name, 'issues', i.number)}">${esc(i.title)}</a> ${(i.labels || []).map(l => `<span class="Label Label--accent" style="background:var(--bgColor-accent-muted)">${esc(l)}</span>`).join(' ')}<div class="s">#${i.number} · ${esc(i.author)} opened ${GH.timeAgo(i.createdAt)}</div></div>${i.comments.length ? `<span class="muted f6 flex gap-1">${icon('comment')} ${i.comments.length}</span>` : ''}</div>`).join('')
           : `<div class="blankslate">${icon('search', 24)}<h3>No results matched your search</h3><p>Try a different search query. Los <em>issues</em> sirven para anotar tareas, ideas o problemas del proyecto.</p></div>`}</div>
       </div></div>`
@@ -79,9 +80,9 @@
 
   // ---------------- Settings ----------------
   const SECTIONS = [
-    [null, [['general', 'gear', 'General']]],
-    ['Access', [['access', 'people', 'Collaborators'], ['moderation', 'report', 'Moderation options']]],
-    ['Code and automation', [['branches', 'git-branch', 'Branches'], ['tags', 'tag', 'Tags'], ['rules', 'repo-push', 'Rules'], ['actions', 'play', 'Actions'], ['webhooks', 'link', 'Webhooks'], ['copilot', 'copilot', 'Copilot'], ['environments', 'server', 'Environments'], ['codespaces', 'codespaces', 'Codespaces'], ['pages', 'browser', 'Pages']]],
+    [null, [['general', 'gear', L.general]]],
+    ['Access', [['access', 'people', L.collaborators], ['moderation', 'report', 'Moderation options']]],
+    ['Code and automation', [['branches', 'git-branch', 'Branches'], ['tags', 'tag', 'Tags'], ['rules', 'repo-push', 'Rules'], ['actions', 'play', L.tabActions], ['webhooks', 'link', 'Webhooks'], ['copilot', 'copilot', 'Copilot'], ['environments', 'server', 'Environments'], ['codespaces', 'codespaces', 'Codespaces'], ['pages', 'browser', 'Pages']]],
     ['Security', [['security', 'shield', 'Advanced Security'], ['keys', 'key', 'Deploy keys'], ['secrets', 'shield-lock', 'Secrets and variables']]],
     ['Integrations', [['apps', 'apps', 'GitHub Apps'], ['notifications', 'mention', 'Email notifications']]]
   ];
@@ -98,17 +99,17 @@
     else {
       const item = SECTIONS.flatMap(s => s[1]).find(x => x[0] === sec);
       if (!item) return V.notFound(rt);
-      body = `<h2 class="settings-section-title">${item[2]}</h2><div class="Box blankslate">${icon(item[1], 24)}<p>Esta sección de configuración existe en GitHub, pero el simulador se concentra en <a href="${href(r.owner, r.name, 'settings')}">General</a> y <a href="${href(r.owner, r.name, 'settings', 'access')}">Collaborators</a>.</p></div>`;
+      body = `<h2 class="settings-section-title">${item[2]}</h2><div class="Box blankslate">${icon(item[1], 24)}<p>Esta sección de configuración existe en GitHub, pero el simulador se concentra en <a href="${href(r.owner, r.name, 'settings')}">${L.general}</a> y <a href="${href(r.owner, r.name, 'settings', 'access')}">${L.collaborators}</a>.</p></div>`;
     }
     return {
-      header: { repo: r, tab: 'settings' }, title: `Settings · ${r.owner}/${r.name}`,
+      header: { repo: r, tab: 'settings' }, title: `${L.tabSettings} · ${r.owner}/${r.name}`,
       html: `<div class="container-xl"><div class="settings-layout" data-tour="settings-page"><div>${settingsNav(r, sec)}</div><div style="min-width:0">${body}</div></div></div>`
     };
   };
   function general(r) {
     const vis = r.visibility;
-    return `<h2 class="settings-section-title">General</h2>
-      <label class="form-label" for="st-name">Repository name</label>
+    return `<h2 class="settings-section-title">${L.general}</h2>
+      <label class="form-label" for="st-name">${L.repoName}</label>
       <div class="flex gap-2" style="max-width:440px"><input class="form-control" id="st-name" value="${esc(r.name)}"><button class="btn" data-action="renameRepo">Rename</button></div>
       <label class="checkbox mt-3"><input type="checkbox" data-onchange="notsimCheck" data-what="Repositorios plantilla"><span><strong>Template repository</strong><br><span class="muted f6">Template repositories let users generate new repositories with the same directory structure and files.</span></span></label>
       <h3 class="f5 bold mt-4 mb-2">Default branch</h3>
@@ -116,9 +117,9 @@
       <div class="flex gap-2"><span class="branch-name">${esc(r.defaultBranch)}</span><button class="btn btn-sm btn-icon" data-action="switchDefault" aria-label="Switch to another branch">${icon('arrow-both')}</button></div>
       <h2 class="settings-section-title">Features</h2>
       ${[['wiki', 'Wikis', 'Wikis host documentation for your repository.'], ['issues', 'Issues', 'Issues integrate lightweight task tracking into your repository.'], ['projects', 'Projects', 'Projects on GitHub are created at the repository owner\'s level.'], ['discussions', 'Discussions', 'Discussions is the space for your community to have conversations.']].map(([k, t, d]) => `<label class="checkbox mb-3"><input type="checkbox" ${r.features[k] ? 'checked' : ''} data-onchange="toggleFeature" data-k="${k}"><span><strong>${t}</strong><br><span class="muted f6">${d}</span></span></label>`).join('')}
-      <h2 class="settings-section-title" style="border:0">Danger Zone</h2>
+      <h2 class="settings-section-title" style="border:0">${L.dangerZone}</h2>
       <div class="Box Box--danger" data-tour="danger-zone">
-        <div class="danger-row" data-tour="danger-visibility"><div class="txt"><strong>Change repository visibility</strong><span class="f6">This repository is currently <strong data-tour="current-visibility">${vis}</strong>.</span></div><button class="btn btn-danger" data-action="visibilityMenu" data-tour="change-visibility-btn" aria-haspopup="true">Change visibility ${icon('triangle-down')}</button></div>
+        <div class="danger-row" data-tour="danger-visibility"><div class="txt"><strong>Change repository visibility</strong><span class="f6">This repository is currently <strong data-tour="current-visibility">${vis}</strong>.</span></div><button class="btn btn-danger" data-action="visibilityMenu" data-tour="change-visibility-btn" aria-haspopup="true">${L.changeVisibility} ${icon('triangle-down')}</button></div>
         <div class="danger-row"><div class="txt"><strong>Disable branch protection rules</strong><span class="f6">Disable branch protection rules enforcement and APIs</span></div><button class="btn btn-danger" data-action="notsim" data-what="Reglas de protección de ramas">Disable branch protection rules</button></div>
         <div class="danger-row"><div class="txt"><strong>Transfer ownership</strong><span class="f6">Transfer this repository to another user or to an organization where you have the ability to create repositories.</span></div><button class="btn btn-danger" data-action="notsim" data-what="Transferir propiedad">Transfer</button></div>
         <div class="danger-row"><div class="txt"><strong>Archive this repository</strong><span class="f6">Mark this repository as archived and read-only.</span></div><button class="btn btn-danger" data-action="notsim" data-what="Archivar repositorios">Archive this repository</button></div>
@@ -156,7 +157,7 @@
       footer = `<button class="btn btn-block btn-danger" data-action="visNext" data-tour="vis-step-1">I want to make this repository ${to}</button>`;
     } else if (visStep === 2) {
       body = `<p class="bold mb-2">Please read the following effects:</p><ul style="padding-left:20px">${effects.map(e => `<li class="mb-2">${e}</li>`).join('')}</ul>`;
-      footer = `<button class="btn btn-block btn-danger" data-action="visNext" data-tour="vis-step-2">I have read and understand these effects</button>`;
+      footer = `<button class="btn btn-block btn-danger" data-action="visNext" data-tour="vis-step-2">${L.iUnderstand}</button>`;
     } else {
       body = `<p class="mb-2">To confirm, type "<strong>${esc(r.owner)}/${esc(r.name)}</strong>" in the box below</p><input class="form-control" id="vis-confirm" data-oninput="visConfirmInput" autocomplete="off" data-tour="vis-confirm-input" aria-label="Type the repository name to confirm">`;
       footer = `<button class="btn btn-block btn-danger" data-action="visApply" id="vis-apply" disabled data-tour="vis-step-3">Make this repository ${to}</button>`;
@@ -184,18 +185,18 @@
   // Collaborators
   function access(r) {
     const n = r.collaborators.length;
-    return `<h2 class="settings-section-title">Collaborators</h2>
+    return `<h2 class="settings-section-title">${L.collaborators}</h2>
       <h3 class="f4 mb-3" style="font-weight:400">Who has access</h3>
       <div class="access-cards" data-tour="who-has-access">
         <div class="access-card"><div class="k">${r.visibility === 'private' ? 'PRIVATE REPOSITORY' : 'PUBLIC REPOSITORY'} ${icon(r.visibility === 'private' ? 'lock' : 'globe', 12)}</div><p class="mt-2">${r.visibility === 'private' ? 'Only those with access to this repository can view it.' : 'This repository is public and visible to anyone.'}</p><a class="f6" href="${href(r.owner, r.name, 'settings')}#danger">Manage</a></div>
         <div class="access-card"><div class="k">DIRECT ACCESS ${icon('people', 12)}</div><p class="mt-2">${n ? `<strong>${n}</strong> ${n === 1 ? 'has' : 'have'} access to this repository.` : '0 collaborators have access to this repository. Only you can contribute to this repository.'}</p><span class="f6 muted">${r.collaborators.filter(c => c.status === 'pending').length} pending invitation${r.collaborators.filter(c => c.status === 'pending').length === 1 ? '' : 's'}</span></div>
       </div>
       <h3 class="f4 mb-3" style="font-weight:400">Manage access</h3>
-      <div class="Box" data-tour="manage-access">${n ? `<div class="Box-header"><input type="checkbox" aria-label="Select all"><span class="flex-1 bold">Select all</span><button class="btn btn-primary btn-sm" data-action="addPeopleDialog" data-tour="add-people-btn">Add people</button></div>${r.collaborators.map(c => `<div class="Box-row" data-tour="collab-${esc(c.login)}"><input type="checkbox" aria-label="Select ${esc(c.login)}">${avatar(c.login, 32)}<div class="flex-1"><strong>${esc(c.login)}</strong><div class="muted f6">${c.status === 'pending' ? `Awaiting ${esc(c.login)}’s response` : 'Collaborator'}</div></div>${c.status === 'pending' ? '<span class="Label Label--attention">Pending Invite</span>' : ''}<select class="form-control" style="width:auto;height:28px;padding:0 8px" data-onchange="collabRole" data-l="${esc(c.login)}" aria-label="Role">${['Read', 'Triage', 'Write', 'Maintain', 'Admin'].map(x => `<option ${x === c.role ? 'selected' : ''}>${x}</option>`).join('')}</select><button class="btn btn-invisible btn-sm btn-icon" data-action="removeCollab" data-l="${esc(c.login)}" aria-label="Remove ${esc(c.login)}">${icon('trash')}</button></div>`).join('')}`
-        : `<div class="blankslate">${icon('people', 24)}<h3>You haven't invited any collaborators yet</h3><p class="mb-3"></p><button class="btn btn-primary" data-action="addPeopleDialog" data-tour="add-people-btn">Add people</button></div>`}</div>
-      <p class="muted f6 mt-3">${icon('info', 12)} Roles: <strong>Read</strong> (ver), <strong>Triage</strong> (organizar issues), <strong>Write</strong> (subir cambios), <strong>Maintain</strong> (administrar sin acciones peligrosas), <strong>Admin</strong> (control total).</p>`;
+      <div class="Box" data-tour="manage-access">${n ? `<div class="Box-header"><input type="checkbox" aria-label="Select all"><span class="flex-1 bold">Select all</span><button class="btn btn-primary btn-sm" data-action="addPeopleDialog" data-tour="add-people-btn">${L.addPeople}</button></div>${r.collaborators.map(c => `<div class="Box-row" data-tour="collab-${esc(c.login)}"><input type="checkbox" aria-label="Select ${esc(c.login)}">${avatar(c.login, 32)}<div class="flex-1"><strong>${esc(c.login)}</strong><div class="muted f6">${c.status === 'pending' ? `Awaiting ${esc(c.login)}’s response` : 'Collaborator'}</div></div>${c.status === 'pending' ? `<span class="Label Label--attention">${L.pendingInvite}</span>` : ''}<select class="form-control" style="width:auto;height:28px;padding:0 8px" data-onchange="collabRole" data-l="${esc(c.login)}" aria-label="Role">${['Read', 'Triage', 'Write', 'Maintain', 'Admin'].map(x => `<option value="${x}" ${x === c.role ? 'selected' : ''}>${esc(GH.labels.role(x))}</option>`).join('')}</select><button class="btn btn-invisible btn-sm btn-icon" data-action="removeCollab" data-l="${esc(c.login)}" aria-label="Remove ${esc(c.login)}">${icon('trash')}</button></div>`).join('')}`
+        : `<div class="blankslate">${icon('people', 24)}<h3>You haven't invited any collaborators yet</h3><p class="mb-3"></p><button class="btn btn-primary" data-action="addPeopleDialog" data-tour="add-people-btn">${L.addPeople}</button></div>`}</div>
+      <p class="muted f6 mt-3">${icon('info', 12)} Roles: <strong>${L.roleRead}</strong> (ver), <strong>${L.roleTriage}</strong> (organizar issues), <strong>${L.roleWrite}</strong> (subir cambios), <strong>${L.roleMaintain}</strong> (administrar sin acciones peligrosas), <strong>${L.roleAdmin}</strong> (control total).</p>`;
   }
-  A.collabRole = (el) => { S().setCollaboratorRole(GH.router.current.repo, el.getAttribute('data-l'), el.value); GH.ui.toast(`Role updated to <strong>${esc(el.value)}</strong>`); };
+  A.collabRole = (el) => { S().setCollaboratorRole(GH.router.current.repo, el.getAttribute('data-l'), el.value); GH.ui.toast(`Role updated to <strong>${esc(GH.labels.role(el.value))}</strong>`); };
   A.removeCollab = (el) => { S().removeCollaborator(GH.router.current.repo, el.getAttribute('data-l')); GH.render(); };
   let addSel = null;
   A.addPeopleDialog = () => {
@@ -214,7 +215,7 @@
   };
   A.apPick = (el) => {
     addSel = el.getAttribute('data-l');
-    const b = document.getElementById('ap-add'); b.disabled = false; b.textContent = `Add ${addSel} to this repository`;
+    const b = document.getElementById('ap-add'); b.disabled = false; b.textContent = L.addToRepo.replace('{user}', addSel);
     document.querySelectorAll('#ap-results .ActionList-btn').forEach(x => x.classList.toggle('active', x === el));
     GH.bus.emit('ap:picked', addSel);
   };
@@ -238,14 +239,14 @@
       html = `<div class="container-lg"><div class="Box blankslate" style="padding:48px">${icon('book', 24)}<h3>Welcome to the ${esc(r.name)} wiki!</h3><p>Wikis provide a place in your repository to lay out the roadmap of your project, show the current status, and document software better, together.</p><button class="btn btn-primary mt-3" data-action="notsim" data-what="Wikis">Create the first page</button></div></div>`;
     } else if (s === 'security') {
       const rows = [['shield', 'Security policy', 'Define how users should report security vulnerabilities for this repository', 'Disabled'], ['report', 'Security advisories', 'View or disclose security advisories for this repository', 'Enabled'], ['shield-lock', 'Private vulnerability reporting', 'Allow users to privately report potential security vulnerabilities', 'Disabled'], ['package', 'Dependabot alerts', 'Get notified when one of your dependencies has a vulnerability', 'Disabled'], ['code', 'Code scanning alerts', 'Automatically detect common vulnerability and coding errors', 'Needs setup'], ['key', 'Secret scanning alerts', 'Get notified when a secret is pushed to this repository', 'Disabled']];
-      html = `<div class="container-xl"><h1 class="page-title mb-3">Security overview</h1><div class="Box">${rows.map(([i, t, d, st]) => `<div class="Box-row">${icon(i, 16, 'muted')}<div class="flex-1"><strong>${t}</strong> <span class="muted f6">· ${st}</span><div class="muted f6">${d}</div></div>${S().isAdmin(r) ? `<button class="btn btn-sm" data-action="notsim" data-what="${t}">Set up</button>` : ''}</div>`).join('')}</div><p class="muted f6 mt-3">${icon('info', 12)} Para la visibilidad y el acceso de un repositorio, entra a <strong>Settings</strong> (solo visible para administradores).</p></div>`;
+      html = `<div class="container-xl"><h1 class="page-title mb-3">Security overview</h1><div class="Box">${rows.map(([i, t, d, st]) => `<div class="Box-row">${icon(i, 16, 'muted')}<div class="flex-1"><strong>${t}</strong> <span class="muted f6">· ${st}</span><div class="muted f6">${d}</div></div>${S().isAdmin(r) ? `<button class="btn btn-sm" data-action="notsim" data-what="${t}">Set up</button>` : ''}</div>`).join('')}</div><p class="muted f6 mt-3">${icon('info', 12)} Para la visibilidad y el acceso de un repositorio, entra a <strong>${L.tabSettings}</strong> (solo visible para administradores).</p></div>`;
     } else {
       const week = Date.now() - 7 * 86400000;
       const commits = Object.values(r.commits).filter(c => c.date > week);
       html = `<div class="container-xl"><div class="settings-layout"><nav class="navlist">${['Pulse', 'Contributors', 'Community', 'Traffic', 'Commits', 'Code frequency', 'Dependency graph', 'Network', 'Forks'].map((l, i) => `<button class="navlist-item ${i === 0 ? 'selected' : ''}" ${i ? `data-action="notsim" data-what="Insights · ${l}"` : ''}>${l}</button>`).join('')}</nav>
         <div><div class="flex mb-3" style="border-bottom:1px solid var(--borderColor-default);padding-bottom:8px"><h2 class="f4" style="font-weight:400">${GH.fmtDate(week)} – ${GH.fmtDate(Date.now())}</h2><span class="ml-auto"></span><button class="btn btn-sm">Period: 1 week ${icon('triangle-down')}</button></div>
         <div class="Box"><div class="Box-header"><strong>Overview</strong></div><div class="flex" style="justify-content:space-around;padding:24px;text-align:center"><div><div style="font-size:24px">${r.pulls.filter(p => p.createdAt > week).length}</div><div class="muted f6">Active pull requests</div></div><div><div style="font-size:24px">${r.issues.filter(i => i.createdAt > week).length}</div><div class="muted f6">Active issues</div></div><div><div style="font-size:24px">${commits.length}</div><div class="muted f6">Commits</div></div><div><div style="font-size:24px">${new Set(commits.map(c => c.author)).size}</div><div class="muted f6">Authors</div></div></div></div>
-        <p class="muted f6 mt-3">${icon('info', 12)} <strong>Insights</strong> muestra estadísticas de actividad del proyecto.</p></div></div></div>`;
+        <p class="muted f6 mt-3">${icon('info', 12)} <strong>${L.tabInsights}</strong> muestra estadísticas de actividad del proyecto.</p></div></div></div>`;
     }
     return { header: { repo: r, tab: s }, title: `${s} · ${r.owner}/${r.name}`, html };
   };

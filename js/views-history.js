@@ -3,6 +3,7 @@
   'use strict';
   const { esc, icon, avatar } = GH;
   const S = () => GH.store;
+  const L = GH.L;
   const V = GH.views, A = GH.actions;
   const href = (...a) => GH.router.href(...a);
 
@@ -61,13 +62,13 @@
     const groups = [];
     list.forEach(c => { const d = GH.fmtDate(c.date); let g = groups[groups.length - 1]; if (!g || g.d !== d) groups.push(g = { d, items: [] }); g.items.push(c); });
     return {
-      header: { repo: r, tab: 'code' }, title: `Commits · ${r.owner}/${r.name}`,
+      header: { repo: r, tab: 'code' }, title: `${L.commits} · ${r.owner}/${r.name}`,
       html: `<div class="container-xl" data-tour="commits-page">
-        <h1 class="page-title" style="padding-bottom:8px;border-bottom:1px solid var(--borderColor-default);margin-bottom:16px">Commits</h1>
+        <h1 class="page-title" style="padding-bottom:8px;border-bottom:1px solid var(--borderColor-default);margin-bottom:16px">${L.commits}</h1>
         <div class="flex gap-2 mb-3">${GH.branchBtn(r, b, 'commits', '')}${pathFilter ? `<span class="muted">History for <a href="${href(r.owner, r.name, 'tree', b)}">${esc(r.name)}</a> / <strong style="color:var(--fgColor-default)">${esc(pathFilter)}</strong></span>` : ''}<span class="ml-auto"></span><button class="btn" data-action="notsim" data-what="Filtro por autor">${icon('people')} All users ${icon('triangle-down')}</button><button class="btn" data-action="notsim" data-what="Filtro por fecha">${icon('calendar')} All time ${icon('triangle-down')}</button></div>
         <div data-tour="commit-list">${groups.map((g, gi) => `<div class="commit-group"><div class="commit-group-title">${icon('git-commit')} Commits on ${g.d}</div>
           <div class="Box">${g.items.map((c, i) => `<div class="commit-item ${i ? '' : ''}" style="${i ? 'border-top:1px solid var(--borderColor-muted)' : ''}" ${gi === 0 && i === 0 ? 'data-tour="commit-first"' : ''}><div class="flex-1" style="min-width:0"><a class="title" href="${href(r.owner, r.name, 'commit', c.sha)}" ${gi === 0 && i === 0 ? 'data-tour="commit-first-link"' : ''}>${esc(c.message)}</a><div class="byline">${avatar(c.author, 16)}<a class="link-muted bold" href="#/${esc(c.author)}">${esc(c.author)}</a> ${c.author === S().me() ? 'authored' : 'committed'} ${GH.timeAgo(c.date)}</div></div>
-            <div class="right">${c.author === S().me() ? '<span class="Label Label--success">Verified</span>' : ''}<a class="sha-link" href="${href(r.owner, r.name, 'commit', c.sha)}">${c.sha.slice(0, 7)}</a>${GH.ui.copyBtn(c.sha, 'Copy full SHA')}<a class="btn btn-invisible btn-sm btn-icon" href="${href(r.owner, r.name, 'tree', c.sha.slice(0, 7))}" aria-label="Browse repository at this point" title="Browse repository at this point">${icon('code')}</a></div></div>`).join('')}</div></div>`).join('') || `<div class="Box blankslate">${icon('git-commit', 24)}<h3>No commits history</h3></div>`}</div>
+            <div class="right">${c.author === S().me() ? `<span class="Label Label--success">${L.verified}</span>` : ''}<a class="sha-link" href="${href(r.owner, r.name, 'commit', c.sha)}">${c.sha.slice(0, 7)}</a>${GH.ui.copyBtn(c.sha, 'Copy full SHA')}<a class="btn btn-invisible btn-sm btn-icon" href="${href(r.owner, r.name, 'tree', c.sha.slice(0, 7))}" aria-label="Browse repository at this point" title="Browse repository at this point">${icon('code')}</a></div></div>`).join('')}</div></div>`).join('') || `<div class="Box blankslate">${icon('git-commit', 24)}<h3>No commits history</h3></div>`}</div>
       </div>`
     };
   };
@@ -82,9 +83,9 @@
     return {
       header: { repo: r, tab: 'code' }, title: `${c.message} · ${r.owner}/${r.name}@${c.sha.slice(0, 7)}`,
       html: `<div class="container-xl" data-tour="commit-page">
-        <div class="flex mb-3"><h1 class="page-title" style="font-size:24px">Commit <span class="mono muted" style="font-size:20px">${c.sha.slice(0, 7)}</span></h1><span class="ml-auto"></span><a class="btn" href="${href(r.owner, r.name, 'tree', c.sha.slice(0, 7))}" data-tour="browse-files">${icon('code')} Browse files</a></div>
+        <div class="flex mb-3"><h1 class="page-title" style="font-size:24px">Commit <span class="mono muted" style="font-size:20px">${c.sha.slice(0, 7)}</span></h1><span class="ml-auto"></span><a class="btn" href="${href(r.owner, r.name, 'tree', c.sha.slice(0, 7))}" data-tour="browse-files">${icon('code')} ${L.browseFiles}</a></div>
         <div class="Box mb-3"><div style="padding:16px"><h2 class="f4" style="font-size:20px">${esc(c.message)}</h2>${c.description ? `<p class="muted mt-2" style="white-space:pre-wrap">${esc(c.description)}</p>` : ''}
-          <div class="flex gap-2 mt-3 muted f6" style="flex-wrap:wrap">${avatar(c.author, 20)}<a class="link-primary bold" href="#/${esc(c.author)}">${esc(c.author)}</a> committed ${GH.timeAgo(c.date)} ${c.author === S().me() ? '<span class="Label Label--success">Verified</span>' : ''}<span class="ml-auto"></span>${c.parents.length ? `${c.parents.length} parent${c.parents.length > 1 ? 's' : ''} ${c.parents.map(p => `<a class="mono link-muted" href="${href(r.owner, r.name, 'commit', p)}">${p.slice(0, 7)}</a>`).join(' + ')}` : '0 parents'} · commit <span class="mono" style="color:var(--fgColor-default)">${c.sha.slice(0, 7)}</span></div>
+          <div class="flex gap-2 mt-3 muted f6" style="flex-wrap:wrap">${avatar(c.author, 20)}<a class="link-primary bold" href="#/${esc(c.author)}">${esc(c.author)}</a> committed ${GH.timeAgo(c.date)} ${c.author === S().me() ? `<span class="Label Label--success">${L.verified}</span>` : ''}<span class="ml-auto"></span>${c.parents.length ? `${c.parents.length} parent${c.parents.length > 1 ? 's' : ''} ${c.parents.map(p => `<a class="mono link-muted" href="${href(r.owner, r.name, 'commit', p)}">${p.slice(0, 7)}</a>`).join(' + ')}` : '0 parents'} · commit <span class="mono" style="color:var(--fgColor-default)">${c.sha.slice(0, 7)}</span></div>
           ${branches.length ? `<div class="flex gap-1 mt-2 f6 muted">${icon('git-branch', 12)} ${branches.map(b => `<a class="branch-name" href="${href(r.owner, r.name, 'tree', b)}">${esc(b)}</a>`).join(' ')}</div>` : ''}
         </div></div>
         <p class="mb-3" data-tour="commit-stats">${icon('file-diff', 16, 'muted')} Showing <strong>${files.length} changed file${files.length === 1 ? '' : 's'}</strong> with <strong class="color-success">${tot.add} additions</strong> and <strong class="color-danger">${tot.del} deletions</strong>.</p>

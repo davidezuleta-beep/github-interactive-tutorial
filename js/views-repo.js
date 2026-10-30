@@ -3,6 +3,7 @@
   'use strict';
   const { esc, icon, avatar } = GH;
   const S = () => GH.store;
+  const L = GH.L;
   const V = GH.views, A = GH.actions;
   const href = (...a) => GH.router.href(...a);
   const isText = (name) => /\.(md|markdown|txt|csv|tsv|html?|css|js|json|ya?ml|xml|svg|py|rb|java|c|cpp|ts|tsx|jsx|sh|ini|cfg|gitignore)$/i.test(name) || /^(LICENSE|README|\.gitignore|Makefile)$/i.test(name.split('/').pop());
@@ -47,17 +48,17 @@
       if (Date.now() - last.date > 3 * 86400000) return null;
       return { b, last };
     }).filter(Boolean);
-    return items.map(({ b, last }) => `<div class="flash flash-warn mb-3" data-tour="push-banner">${icon('git-branch', 16, 'muted')}<span class="flex-1"><span class="branch-name">${esc(b)}</span> had recent pushes ${GH.timeAgo(last.date)}</span><button class="btn btn-primary" data-nav="${href(r.owner, r.name, 'compare', r.defaultBranch + '...' + b)}?expand=1" data-tour="compare-pr-btn">Compare &amp; pull request</button></div>`).join('');
+    return items.map(({ b, last }) => `<div class="flash flash-warn mb-3" data-tour="push-banner">${icon('git-branch', 16, 'muted')}<span class="flex-1"><span class="branch-name">${esc(b)}</span> had recent pushes ${GH.timeAgo(last.date)}</span><button class="btn btn-primary" data-nav="${href(r.owner, r.name, 'compare', r.defaultBranch + '...' + b)}?expand=1" data-tour="compare-pr-btn">${esc(L.comparePr)}</button></div>`).join('');
   }
 
   function repoTitleRow(r) {
     const admin = S().isAdmin(r);
-    return `<div class="repo-title-row" data-tour="repo-title">${avatar(r.owner, 24, !!(S().state.people[r.owner] || {}).org)}<a class="repo-name" href="${href(r.owner, r.name)}">${esc(r.name)}</a><span class="Label" data-tour="repo-visibility-label">${r.visibility === 'private' ? 'Private' : 'Public'}</span>${r.forkOf ? `<span class="muted f6 flex gap-1">${icon('repo-forked', 12)} forked from <a href="#/${esc(r.forkOf)}">${esc(r.forkOf)}</a></span>` : ''}
+    return `<div class="repo-title-row" data-tour="repo-title">${avatar(r.owner, 24, !!(S().state.people[r.owner] || {}).org)}<a class="repo-name" href="${href(r.owner, r.name)}">${esc(r.name)}</a><span class="Label" data-tour="repo-visibility-label">${r.visibility === 'private' ? L.private : L.public}</span>${r.forkOf ? `<span class="muted f6 flex gap-1">${icon('repo-forked', 12)} forked from <a href="#/${esc(r.forkOf)}">${esc(r.forkOf)}</a></span>` : ''}
       <div class="actions">
         ${admin ? `<button class="btn btn-sm" data-action="notsim" data-what="Pin">${icon('pin')} Pin</button>` : ''}
-        <div class="btn-group"><button class="btn btn-sm" data-action="watchRepo">${icon(r.watching ? 'eye' : 'eye')} ${r.watching ? 'Unwatch' : 'Watch'} <span class="Counter">${r.watchers}</span></button><button class="btn btn-sm btn-caret" data-action="notsim" data-what="Opciones de notificación">${icon('triangle-down')}</button></div>
-        <div class="btn-group"><button class="btn btn-sm" data-action="forkRepo" ${admin ? 'disabled title="Cannot fork because you own this repository"' : ''}>${icon('repo-forked')} Fork <span class="Counter">${r.forks}</span></button><button class="btn btn-sm btn-caret" data-action="notsim" data-what="Lista de forks">${icon('triangle-down')}</button></div>
-        <div class="btn-group" data-tour="star-btn"><button class="btn btn-sm" data-action="starCurrent">${icon(r.starred ? 'star-fill' : 'star', 16, r.starred ? 'color-attention' : '')} ${r.starred ? 'Starred' : 'Star'} <span class="Counter">${r.stars}</span></button><button class="btn btn-sm btn-caret" data-action="notsim" data-what="Listas de estrellas">${icon('triangle-down')}</button></div>
+        <div class="btn-group"><button class="btn btn-sm" data-action="watchRepo">${icon(r.watching ? 'eye' : 'eye')} ${r.watching ? L.unwatch : L.watch} <span class="Counter">${r.watchers}</span></button><button class="btn btn-sm btn-caret" data-action="notsim" data-what="Opciones de notificación">${icon('triangle-down')}</button></div>
+        <div class="btn-group"><button class="btn btn-sm" data-action="forkRepo" ${admin ? 'disabled title="Cannot fork because you own this repository"' : ''}>${icon('repo-forked')} ${L.fork} <span class="Counter">${r.forks}</span></button><button class="btn btn-sm btn-caret" data-action="notsim" data-what="Lista de forks">${icon('triangle-down')}</button></div>
+        <div class="btn-group" data-tour="star-btn"><button class="btn btn-sm" data-action="starCurrent">${icon(r.starred ? 'star-fill' : 'star', 16, r.starred ? 'color-attention' : '')} ${r.starred ? L.starred : L.star} <span class="Counter">${r.stars}</span></button><button class="btn btn-sm btn-caret" data-action="notsim" data-what="Listas de estrellas">${icon('triangle-down')}</button></div>
       </div></div>`;
   }
   A.watchRepo = () => { const r = GH.router.current.repo; S().toggleWatch(r); GH.ui.toast(r.watching ? 'Ahora recibirás notificaciones de este repositorio.' : 'Dejaste de seguir este repositorio.', 'info'); GH.render(); };
@@ -67,7 +68,7 @@
     GH.ui.dialog({
       title: 'Create a new fork', wide: true,
       body: `<p class="muted mb-3">A <em>fork</em> is a copy of a repository. Forking a repository allows you to freely experiment with changes without affecting the original project.</p>
-        <div class="flex gap-2"><div><label class="form-label">Owner *</label><button class="btn">${avatar(S().me(), 20)} ${esc(S().me())}</button></div><div style="font-size:24px;padding-top:24px" class="muted">/</div><div class="flex-1"><label class="form-label">Repository name *</label><input class="form-control" value="${esc(r.name)}" readonly></div></div>
+        <div class="flex gap-2"><div><label class="form-label">${L.owner} *</label><button class="btn">${avatar(S().me(), 20)} ${esc(S().me())}</button></div><div style="font-size:24px;padding-top:24px" class="muted">/</div><div class="flex-1"><label class="form-label">${L.repoName} *</label><input class="form-control" value="${esc(r.name)}" readonly></div></div>
         <p class="muted f6 mt-3">${icon('info', 12)} En el simulador, el fork se crea como una copia en tu cuenta.</p>`,
       footer: `<button class="btn" data-action="closeDialog">Cancel</button><button class="btn btn-primary" data-action="doFork">Create fork</button>`
     });
@@ -101,7 +102,7 @@
     const r = GH.router.current.repo;
     GH.ui.dialog({
       title: 'Edit repository details',
-      body: `<label class="form-label">Description</label><textarea class="form-control" id="ab-desc" style="min-height:70px">${esc(r.description)}</textarea><label class="form-label mt-3">Topics <span class="muted" style="font-weight:400">(separate with spaces)</span></label><input class="form-control" id="ab-topics" value="${esc(r.topics.join(' '))}">`,
+      body: `<label class="form-label">${L.description}</label><textarea class="form-control" id="ab-desc" style="min-height:70px">${esc(r.description)}</textarea><label class="form-label mt-3">Topics <span class="muted" style="font-weight:400">(separate with spaces)</span></label><input class="form-control" id="ab-topics" value="${esc(r.topics.join(' '))}">`,
       footer: `<button class="btn" data-action="closeDialog">Cancel</button><button class="btn btn-primary" data-action="saveAbout">Save changes</button>`
     });
   };
@@ -117,12 +118,12 @@
 
   function addFileBtn(r, b, path, compact) {
     if (!S().isAdmin(r) || !r.branches[b]) return '';
-    return compact ? `<button class="btn btn-icon" data-action="addFileMenu" data-branch="${esc(b)}" data-path="${esc(path || '')}" aria-label="Add file" data-tour="add-file-btn">${icon('plus')}</button>`
-      : `<button class="btn" data-action="addFileMenu" data-branch="${esc(b)}" data-path="${esc(path || '')}" data-tour="add-file-btn">Add file ${icon('triangle-down', 16, 'dropdown-caret')}</button>`;
+    return compact ? `<button class="btn btn-icon" data-action="addFileMenu" data-branch="${esc(b)}" data-path="${esc(path || '')}" aria-label="${L.addFile}" data-tour="add-file-btn">${icon('plus')}</button>`
+      : `<button class="btn" data-action="addFileMenu" data-branch="${esc(b)}" data-path="${esc(path || '')}" data-tour="add-file-btn">${L.addFile} ${icon('triangle-down', 16, 'dropdown-caret')}</button>`;
   }
   A.addFileMenu = (el) => {
     const r = GH.router.current.repo, b = el.getAttribute('data-branch'), p = el.getAttribute('data-path');
-    GH.ui.openMenu(el, `<ul class="ActionList">${GH.ui.menuItem({ icon: 'plus', label: 'Create new file', nav: href(r.owner, r.name, 'new', b, p), tour: 'menu-new-file' })}${GH.ui.menuItem({ icon: 'upload', label: 'Upload files', nav: href(r.owner, r.name, 'upload', b, p), tour: 'menu-upload' })}</ul>`, { width: 200, id: 'add-file', tour: 'menu-add-file' });
+    GH.ui.openMenu(el, `<ul class="ActionList">${GH.ui.menuItem({ icon: 'plus', label: L.createNewFile, nav: href(r.owner, r.name, 'new', b, p), tour: 'menu-new-file' })}${GH.ui.menuItem({ icon: 'upload', label: L.uploadFiles, nav: href(r.owner, r.name, 'upload', b, p), tour: 'menu-upload' })}</ul>`, { width: 200, id: 'add-file', tour: 'menu-add-file' });
   };
 
   // ---------- Code view (repo home + folders) ----------
@@ -148,7 +149,7 @@
             <span class="spacer"></span>
             <div class="input-wrap goto-file">${icon('search')}<input class="form-control" placeholder="Go to file" data-action="gotoFile" readonly aria-label="Go to file"><kbd class="kbd-hint">t</kbd></div>
             ${addFileBtn(r, b, '', true)}
-            <button class="btn btn-primary" data-action="codeMenu" aria-haspopup="true" data-tour="code-btn">${icon('code')} Code ${icon('triangle-down')}</button>
+            <button class="btn btn-primary" data-action="codeMenu" aria-haspopup="true" data-tour="code-btn">${icon('code')} ${L.codeBtn} ${icon('triangle-down')}</button>
           </div>
           ${lastCommitBar(r, b, head, '')}
           ${fileTable(r, b, '', entries, false)}
@@ -253,17 +254,17 @@ git push -u origin main</pre></div>
     const list = () => {
       const names = S().branchNames(r).filter(n => n.toLowerCase().includes(q.toLowerCase()));
       const clean = q.trim().replace(/\s+/g, '-').replace(/[^\w.\-]/g, '-');
-      let h = names.map(n => `<li class="ActionList-item"><button class="ActionList-btn ${n === cur ? 'checked' : ''}" data-nav="${target(n)}" data-tour="branch-item-${esc(n)}">${icon('check', 16, 'check')}<span class="flex-1 truncate">${esc(n)}</span>${n === r.defaultBranch ? '<span class="Label">default</span>' : ''}</button></li>`).join('');
+      let h = names.map(n => `<li class="ActionList-item"><button class="ActionList-btn ${n === cur ? 'checked' : ''}" data-nav="${target(n)}" data-tour="branch-item-${esc(n)}">${icon('check', 16, 'check')}<span class="flex-1 truncate">${esc(n)}</span>${n === r.defaultBranch ? `<span class="Label">${L.defaultLabel}</span>` : ''}</button></li>`).join('');
       if (!names.length && !q) h = '<li class="muted" style="padding:8px 16px">Nothing to show</li>';
-      if (q.trim() && canCreate && !r.branches[clean]) h += `<li class="ActionList-item"><button class="ActionList-btn" data-action="createBranchFromMenu" data-name="${esc(clean)}" data-from="${esc(cur)}" data-tour="create-branch-item">${icon('git-branch')}<span class="flex-1">Create branch <strong>${esc(clean)}</strong> from <strong>${esc(cur)}</strong></span></button></li>`;
+      if (q.trim() && canCreate && !r.branches[clean]) h += `<li class="ActionList-item"><button class="ActionList-btn" data-action="createBranchFromMenu" data-name="${esc(clean)}" data-from="${esc(cur)}" data-tour="create-branch-item">${icon('git-branch')}<span class="flex-1">${L.createBranch} <strong>${esc(clean)}</strong> from <strong>${esc(cur)}</strong></span></button></li>`;
       else if (q.trim() && !names.length) h += `<li class="muted" style="padding:8px 16px">Nothing to show</li>`;
       return h;
     };
     const m = GH.ui.openMenu(el, `<div class="Overlay-header"><h3>Switch branches/tags</h3><button class="btn btn-invisible btn-sm btn-icon" data-action="closeMenus" aria-label="Close">${icon('x')}</button></div>
-      <div style="padding:0 16px 8px"><div class="input-wrap">${icon('search')}<input class="form-control" placeholder="${canCreate ? 'Find or create a branch...' : 'Find a branch...'}" data-tour="branch-filter" aria-label="Find or create a branch" autocomplete="off"></div></div>
+      <div style="padding:0 16px 8px"><div class="input-wrap">${icon('search')}<input class="form-control" placeholder="${canCreate ? L.branchFilter : 'Find a branch...'}" data-tour="branch-filter" aria-label="Find or create a branch" autocomplete="off"></div></div>
       <div class="tabnav" style="padding:0 8px"><button class="tabnav-tab selected">Branches</button><button class="tabnav-tab" data-action="notsim" data-what="Tags">Tags</button></div>
       <ul class="ActionList" id="branch-list" style="max-height:300px;overflow:auto">${list()}</ul>
-      <div class="ActionList-divider" style="margin:0"></div><ul class="ActionList"><li class="ActionList-item"><a class="ActionList-btn" href="${href(r.owner, r.name, 'branches')}">View all branches</a></li></ul>`, { width: 320, id: 'branch', tour: 'branch-menu' });
+      <div class="ActionList-divider" style="margin:0"></div><ul class="ActionList"><li class="ActionList-item"><a class="ActionList-btn" href="${href(r.owner, r.name, 'branches')}">${L.viewAllBranches}</a></li></ul>`, { width: 320, id: 'branch', tour: 'branch-menu' });
     const input = m.querySelector('input');
     input.addEventListener('input', () => { q = input.value; m.querySelector('#branch-list').innerHTML = list(); GH.bus.emit('branch:filter', q); });
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const c = m.querySelector('[data-action="createBranchFromMenu"]') || m.querySelector('#branch-list [data-nav]'); if (c) c.click(); } });
@@ -307,7 +308,7 @@ git push -u origin main</pre></div>
         </div>
         ${treePanelWrap(r, b, path, `${lastCommitBar(r, b, c, path, true)}
         <div class="blob-box" data-tour="blob-box"><div class="blob-head">
-          <div class="Segmented" data-tour="blob-modes">${isMd ? `<button data-action="blobMode" data-m="preview" ${mode === 'preview' ? 'aria-current="true"' : ''} data-tour="mode-preview">Preview</button>` : ''}<button data-action="blobMode" data-m="code" ${mode === 'code' ? 'aria-current="true"' : ''} data-tour="mode-code">Code</button><button data-action="blobMode" data-m="blame" ${mode === 'blame' ? 'aria-current="true"' : ''} data-tour="mode-blame">Blame</button></div>
+          <div class="Segmented" data-tour="blob-modes">${isMd ? `<button data-action="blobMode" data-m="preview" ${mode === 'preview' ? 'aria-current="true"' : ''} data-tour="mode-preview">${L.preview}</button>` : ''}<button data-action="blobMode" data-m="code" ${mode === 'code' ? 'aria-current="true"' : ''} data-tour="mode-code">${L.tabCode}</button><button data-action="blobMode" data-m="blame" ${mode === 'blame' ? 'aria-current="true"' : ''} data-tour="mode-blame">${L.blame}</button></div>
           <span class="info">${f.binary ? GH.bytes(f.size) : `${lines.length} lines (${loc} loc) · ${GH.bytes(f.size)}`}</span><span class="spacer flex-1"></span>
           <button class="btn btn-sm" data-action="rawBlob">Raw</button>
           ${f.binary ? '' : `<button class="btn btn-sm btn-icon" data-action="copy" data-copy="${esc(f.content)}" aria-label="Copy raw content">${icon('copy')}</button>`}
@@ -344,17 +345,17 @@ git push -u origin main</pre></div>
     let n = 1; while (r.branches[`${me}-patch-${n}`]) n++;
     const suggested = `${me}-patch-${n}`;
     GH.ui.dialog({
-      title: 'Commit changes', tour: 'commit-dialog',
+      title: L.commitChanges, tour: 'commit-dialog',
       body: `<label class="form-label" for="cd-msg">Commit message</label><input id="cd-msg" class="form-control" value="${esc(o.defaultMsg)}" data-tour="cd-msg" autocomplete="off">
-        <label class="form-label mt-3" for="cd-desc">Extended description</label><textarea id="cd-desc" class="form-control" placeholder="Add an optional extended description..." style="min-height:80px" data-tour="cd-desc"></textarea>
+        <label class="form-label mt-3" for="cd-desc">${L.extendedDesc}</label><textarea id="cd-desc" class="form-control" placeholder="Add an optional extended description..." style="min-height:80px" data-tour="cd-desc"></textarea>
         <div class="mt-3" data-tour="cd-target">
           <label class="radio"><input type="radio" name="cd-where" value="direct" checked data-onchange="cdWhere"><span>Commit directly to the <span class="branch-name">${esc(b)}</span> branch</span></label>
           <label class="radio mt-2"><input type="radio" name="cd-where" value="branch" data-onchange="cdWhere" data-tour="cd-newbranch-radio"><span>Create a <strong>new branch</strong> for this commit and start a pull request <a href="#" data-action="notsim" data-what="Documentación sobre pull requests">Learn more about pull requests</a></span></label>
           <div id="cd-branchwrap" style="display:none;margin:8px 0 0 24px"><div class="input-wrap">${icon('git-branch')}<input id="cd-branch" class="form-control mono" value="${esc(suggested)}" aria-label="New branch name"></div></div>
         </div>`,
-      footer: `<button class="btn" data-action="closeDialog">Cancel</button><button class="btn btn-primary" data-action="cdCommit" data-tour="cd-commit" id="cd-commit">Commit changes</button>`
+      footer: `<button class="btn" data-action="closeDialog">Cancel</button><button class="btn btn-primary" data-action="cdCommit" data-tour="cd-commit" id="cd-commit">${L.commitChanges}</button>`
     });
-    A.cdWhere = () => { const v = document.querySelector('input[name="cd-where"]:checked').value; document.getElementById('cd-branchwrap').style.display = v === 'branch' ? '' : 'none'; document.getElementById('cd-commit').textContent = v === 'branch' ? 'Propose changes' : 'Commit changes'; };
+    A.cdWhere = () => { const v = document.querySelector('input[name="cd-where"]:checked').value; document.getElementById('cd-branchwrap').style.display = v === 'branch' ? '' : 'none'; document.getElementById('cd-commit').textContent = v === 'branch' ? 'Propose changes' : L.commitChanges; };
     A.cdCommit = () => {
       const msg = document.getElementById('cd-msg').value.trim() || o.defaultMsg;
       const desc = document.getElementById('cd-desc').value.trim();
@@ -395,9 +396,9 @@ git push -u origin main</pre></div>
           <nav class="breadcrumb">${crumb}<input class="form-control" style="width:240px;height:32px;font-size:14px" value="${esc(ed.filename)}" placeholder="Name your file..." data-oninput="edName" aria-label="File name" data-tour="editor-filename"><span class="muted f5" style="margin-left:8px">in</span> <span class="branch-name">${esc(b)}</span></nav>
           <span class="spacer flex-1"></span>
           <button class="btn" data-action="edCancel">Cancel changes</button>
-          <button class="btn btn-primary" data-action="edCommit" data-tour="editor-commit">Commit changes...</button>
+          <button class="btn btn-primary" data-action="edCommit" data-tour="editor-commit">${L.commitChangesDots}</button>
         </div>
-        <div class="editor-box"><div class="flex" style="background:var(--bgColor-muted);border-bottom:1px solid var(--borderColor-default);padding:8px 8px 0"><div class="tabnav" style="border:0"><button class="tabnav-tab ${ed.tab === 'edit' ? 'selected' : ''}" data-action="edTab" data-t="edit">Edit</button><button class="tabnav-tab ${ed.tab === 'preview' ? 'selected' : ''}" data-action="edTab" data-t="preview" data-tour="editor-preview-tab">Preview</button></div><span class="ml-auto flex gap-2" style="padding-bottom:8px"><button class="btn btn-sm">Spaces ${icon('triangle-down')}</button><button class="btn btn-sm">2 ${icon('triangle-down')}</button><button class="btn btn-sm">No wrap ${icon('triangle-down')}</button></span></div>
+        <div class="editor-box"><div class="flex" style="background:var(--bgColor-muted);border-bottom:1px solid var(--borderColor-default);padding:8px 8px 0"><div class="tabnav" style="border:0"><button class="tabnav-tab ${ed.tab === 'edit' ? 'selected' : ''}" data-action="edTab" data-t="edit">Edit</button><button class="tabnav-tab ${ed.tab === 'preview' ? 'selected' : ''}" data-action="edTab" data-t="preview" data-tour="editor-preview-tab">${L.preview}</button></div><span class="ml-auto flex gap-2" style="padding-bottom:8px"><button class="btn btn-sm">Spaces ${icon('triangle-down')}</button><button class="btn btn-sm">2 ${icon('triangle-down')}</button><button class="btn btn-sm">No wrap ${icon('triangle-down')}</button></span></div>
           ${ed.tab === 'edit' ? `<div class="editor-area"><div class="editor-gutter" id="ed-gutter">${Array.from({ length: lines }, (_, i) => i + 1).join('\n')}</div><textarea id="ed-text" spellcheck="false" data-oninput="edInput" aria-label="File contents" data-tour="editor-textarea" placeholder="Enter file contents here">${esc(ed.content)}</textarea></div>`
           : `<div class="markdown-body" style="padding:32px;min-height:420px">${/\.md$/i.test(ed.filename) ? GH.markdown(ed.content) : `<pre class="mono">${esc(ed.content)}</pre>`}</div>`}
         </div>
@@ -449,18 +450,18 @@ git push -u origin main</pre></div>
     if (!up || up.key !== key) up = { key, files: [], message: '', desc: '', where: 'direct' };
     const base = rt.path ? rt.path + '/' : '';
     return {
-      header: { repo: r, tab: 'code' }, title: `Upload files · ${r.name}`,
+      header: { repo: r, tab: 'code' }, title: `${L.uploadFiles} · ${r.name}`,
       html: `<div class="container-lg" data-tour="upload-page">
         <nav class="breadcrumb mb-3"><a href="${href(r.owner, r.name, 'tree', b)}">${esc(r.name)}</a>${rt.path ? rt.path.split('/').map(p => `<span class="sep">/</span><span class="current">${esc(p)}</span>`).join('') : ''}<span class="sep">/</span></nav>
         <div class="dropzone" id="dropzone" data-tour="dropzone">${icon('file-added', 24)}<div class="big"><strong>Drag files here to add them to your repository</strong></div><p class="muted mt-2">Or <button class="btn-link" data-action="upChoose" data-tour="choose-files">choose your files</button></p><input type="file" id="up-input" multiple hidden></div>
         ${up.files.length ? `<div class="Box upload-list mt-3" data-tour="upload-list">${up.files.map((f, i) => `<div class="Box-row"><span class="flex gap-2">${icon('file', 16, 'muted')}<span class="mono f6">${esc(base + f.path)}</span>${S().fileAt(r, b, base + f.path) ? '<span class="Label Label--attention">replaces existing file</span>' : ''}</span><span class="flex gap-2"><span class="muted f6">${GH.bytes(f.binary ? f.size : new Blob([f.content]).size)}</span><button class="btn btn-invisible btn-sm btn-icon" data-action="upRemove" data-i="${i}" aria-label="Remove ${esc(f.path)}">${icon('x')}</button></span></div>`).join('')}</div>` : ''}
-        <div class="commit-form">${avatar(S().me(), 48)}<div class="panel" data-tour="upload-commit-box"><h3>Commit changes</h3>
+        <div class="commit-form">${avatar(S().me(), 48)}<div class="panel" data-tour="upload-commit-box"><h3>${L.commitChanges}</h3>
           <input class="form-control" placeholder="Add files via upload" value="${esc(up.message)}" data-oninput="upMsg" aria-label="Commit message" data-tour="upload-msg">
-          <textarea class="form-control mt-2" placeholder="Add an optional extended description..." data-oninput="upDesc" aria-label="Extended description" style="min-height:80px">${esc(up.desc)}</textarea>
+          <textarea class="form-control mt-2" placeholder="Add an optional extended description..." data-oninput="upDesc" aria-label="${L.extendedDesc}" style="min-height:80px">${esc(up.desc)}</textarea>
           <div class="mt-3" data-tour="upload-target"><label class="radio"><input type="radio" name="up-where" value="direct" ${up.where === 'direct' ? 'checked' : ''} data-onchange="upWhere">${icon('git-commit', 16, 'muted')}<span>Commit directly to the <span class="branch-name">${esc(b)}</span> branch.</span></label>
           <label class="radio mt-2"><input type="radio" name="up-where" value="branch" ${up.where === 'branch' ? 'checked' : ''} data-onchange="upWhere">${icon('git-pull-request', 16, 'muted')}<span>Create a <strong>new branch</strong> for this commit and start a pull request.</span></label></div>
         </div></div>
-        <div class="flex gap-2 mt-3" style="margin-left:64px"><button class="btn btn-primary" data-action="upCommit" data-tour="upload-commit" ${up.files.length ? '' : 'disabled'}>Commit changes</button><a class="btn btn-danger" href="${href(r.owner, r.name, 'tree', b, rt.path)}">Cancel</a></div>
+        <div class="flex gap-2 mt-3" style="margin-left:64px"><button class="btn btn-primary" data-action="upCommit" data-tour="upload-commit" ${up.files.length ? '' : 'disabled'}>${L.commitChanges}</button><a class="btn btn-danger" href="${href(r.owner, r.name, 'tree', b, rt.path)}">Cancel</a></div>
       </div>`,
       after() {
         const dz = document.getElementById('dropzone'); const inp = document.getElementById('up-input');

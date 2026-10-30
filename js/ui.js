@@ -3,6 +3,7 @@
   'use strict';
   const { esc, icon, avatar } = GH;
   const S = () => GH.store;
+  const L = GH.L;
   GH.actions = GH.actions || {};
 
   const ui = GH.ui = {};
@@ -190,12 +191,12 @@
     const link = (ic, label, nav, sel, what) => `<button class="navlist-item ${sel ? 'selected' : ''}" ${nav ? `data-nav="${nav}"` : `data-action="notsim" data-what="${what || label}"`} data-drawer-link>${icon(ic)}<span>${label}</span></button>`;
     d.innerHTML = `<div class="drawer-head"><span class="sim-logo" aria-hidden="true">${icon('mortar-board')}</span><button class="btn btn-invisible btn-icon" data-action="closeDrawer" aria-label="Close navigation" data-tour="drawer-close">${icon('x')}</button></div>
       <div class="drawer-body"><div class="navlist">
-        ${link('home', 'Home', '#/', r.view === 'dashboard')}
+        ${link('home', L.home, '#/', r.view === 'dashboard')}
         ${link('globe', 'Feed', '#/', false)}
-        ${link('issue-opened', 'Issues', '#/issues', r.view === 'globalIssues')}
-        ${link('git-pull-request', 'Pull requests', '#/pulls', r.view === 'globalPulls')}
-        ${link('repo', 'Repositories', '#/' + S().me() + '?tab=repositories', false)}
-        ${link('table', 'Projects', null, false)}
+        ${link('issue-opened', L.tabIssues, '#/issues', r.view === 'globalIssues')}
+        ${link('git-pull-request', L.tabPulls, '#/pulls', r.view === 'globalPulls')}
+        ${link('repo', L.repositories, '#/' + S().me() + '?tab=repositories', false)}
+        ${link('table', L.tabProjects, null, false)}
         ${link('comment-discussion', 'Discussions', null, false)}
         ${link('codespaces', 'Codespaces', null, false)}
         ${link('copilot', 'Copilot', null, false)}
@@ -225,7 +226,7 @@
     const r = GH.router.current && GH.router.current.repo;
     ui.openMenu(el, `<ul class="ActionList" role="none">
       ${ui.menuItem({ icon: 'issue-opened', label: 'New issue', action: 'newIssueFromHeader' })}
-      ${ui.menuItem({ icon: 'repo', label: 'New repository', nav: '#/new', tour: 'menu-new-repo' })}
+      ${ui.menuItem({ icon: 'repo', label: L.newRepo, nav: '#/new', tour: 'menu-new-repo' })}
       ${ui.menuItem({ icon: 'repo-push', label: 'Import repository', action: 'notsim', what: 'Import repository' })}
       <li class="ActionList-divider" role="separator"></li>
       ${ui.menuItem({ icon: 'codespaces', label: 'New codespace', action: 'notsim', what: 'Codespaces' })}
@@ -248,8 +249,8 @@
       <ul class="ActionList" role="none" style="padding-top:0">
       ${ui.menuItem({ icon: 'smiley', label: 'Set status', action: 'notsim', what: 'Set status' })}
       <li class="ActionList-divider" role="separator"></li>
-      ${ui.menuItem({ icon: 'person', label: 'Profile', nav: '#/' + u.login, tour: 'menu-profile' })}
-      ${ui.menuItem({ icon: 'repo', label: 'Repositories', nav: '#/' + u.login + '?tab=repositories', tour: 'menu-repos' })}
+      ${ui.menuItem({ icon: 'person', label: L.profile, nav: '#/' + u.login, tour: 'menu-profile' })}
+      ${ui.menuItem({ icon: 'repo', label: L.repositories, nav: '#/' + u.login + '?tab=repositories', tour: 'menu-repos' })}
       ${ui.menuItem({ icon: 'star', label: 'Stars', nav: '#/' + u.login + '?tab=stars' })}
       ${ui.menuItem({ icon: 'code', label: 'Gists', action: 'notsim', what: 'Gists' })}
       ${ui.menuItem({ icon: 'organization', label: 'Organizations', action: 'notsim', what: 'Organizations' })}
@@ -274,7 +275,7 @@
     let context = '';
     if (r) context = `<a class="owner" href="#/${esc(r.owner)}">${esc(r.owner)}</a><span class="sep">/</span><a href="#/${esc(r.owner)}/${esc(r.name)}" data-tour="header-repo-link">${esc(r.name)}</a>`;
     else if (ctx.owner) context = `<a href="#/${esc(ctx.owner)}">${esc(ctx.owner)}</a>`;
-    else context = `<a href="#/">${esc(ctx.title || 'Dashboard')}</a>`;
+    else context = `<a href="#/">${esc(ctx.title || L.dashboard)}</a>`;
     const openIssues = 0;
     return `<header class="AppHeader" role="banner">
       <div class="AppHeader-globalBar">
@@ -308,15 +309,15 @@
     const base = `#/${r.owner}/${r.name}`;
     const t = (id, ic, label, href, count) => `<a class="UnderlineNav-item ${tab === id ? 'selected' : ''}" href="${href}" ${tab === id ? 'aria-current="page"' : ''} data-tour="tab-${id}">${icon(ic)}<span>${label}</span>${count ? `<span class="Counter">${count}</span>` : ''}</a>`;
     return `<div class="AppHeader-localBar"><nav class="UnderlineNav" aria-label="Repository" data-tour="repo-tabs">
-      ${t('code', 'code', 'Code', base)}
-      ${r.features.issues ? t('issues', 'issue-opened', 'Issues', base + '/issues', openIssues) : ''}
-      ${t('pulls', 'git-pull-request', 'Pull requests', base + '/pulls', openPRs)}
-      ${t('actions', 'play', 'Actions', base + '/actions')}
-      ${r.features.projects ? t('projects', 'table', 'Projects', base + '/projects') : ''}
-      ${r.features.wiki && r.owner !== S().me() ? t('wiki', 'book', 'Wiki', base + '/wiki') : ''}
-      ${t('security', 'shield', 'Security and quality', base + '/security')}
-      ${t('insights', 'graph', 'Insights', base + '/insights')}
-      ${S().isAdmin(r) ? t('settings', 'gear', 'Settings', base + '/settings') : ''}
+      ${t('code', 'code', L.tabCode, base)}
+      ${r.features.issues ? t('issues', 'issue-opened', L.tabIssues, base + '/issues', openIssues) : ''}
+      ${t('pulls', 'git-pull-request', L.tabPulls, base + '/pulls', openPRs)}
+      ${t('actions', 'play', L.tabActions, base + '/actions')}
+      ${r.features.projects ? t('projects', 'table', L.tabProjects, base + '/projects') : ''}
+      ${r.features.wiki && r.owner !== S().me() ? t('wiki', 'book', L.tabWiki, base + '/wiki') : ''}
+      ${t('security', 'shield', L.tabSecurity, base + '/security')}
+      ${t('insights', 'graph', L.tabInsights, base + '/insights')}
+      ${S().isAdmin(r) ? t('settings', 'gear', L.tabSettings, base + '/settings') : ''}
     </nav></div>`;
   };
 

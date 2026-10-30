@@ -21,7 +21,7 @@
   const V = () => GH.voice || { play() {}, stop() {}, say() {}, has: () => false, isEnabled: () => false, speaking: () => false, current: () => null };
   const NOOP_G = { moduleStart() {}, hint() {}, term() {}, stepDone: () => 0, moduleComplete: () => ({ pts: 0, bonus: 0, total: 0, badges: [], levelUp: null }), hudHTML: () => '', panelHTML: () => '', completionHTML: () => '', missionBanner: () => '', welcomeHTML: () => '', stepValue: () => 0, reset() {}, state: () => ({ challenges: [] }) };
   const G = () => GH.game || NOOP_G;
-  const stepKey = () => { const st = step(); return st ? mod().id + ':' + st.title : null; };
+  const stepKey = () => { const st = step(); return st ? mod().id + ':' + (st.id || st.title) : null; };
   function voiceKeyNow() {
     if (layer() && layer().querySelector('.tour-welcome')) return 'welcome:0';
     if (layer() && layer().querySelector('.tour-intro:not(.tour-welcome)')) return 'intro:' + layer().querySelector('.tour-intro:not(.tour-welcome)').dataset.i;
