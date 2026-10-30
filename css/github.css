@@ -115,7 +115,9 @@ svg.octicon { display: inline-block; vertical-align: text-bottom; fill: currentC
 .avatar.square { border-radius: 6px; }
 .avatar svg { width: 100%; height: 100%; display: block; }
 .avatar img { width: 100%; height: 100%; display: block; object-fit: cover; }
-.avatar-brand, .avatar-brand.square, .avatar-brand.profile-avatar { background: #00ffff; border-radius: 0 !important; } /* el logo de Biniac es cuadrado, sin biseles */
+/* Logo de Biniac como foto de perfil: círculo, igual que los avatares de GitHub.
+   (Solo la ventana de bienvenida y el reconocimiento final lo muestran cuadrado: ver tour.css.) */
+.avatar-brand, .avatar-brand.square, .avatar-brand.profile-avatar { background: #00ffff; border-radius: 50% !important; }
 .vcard-list { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
 .vcard-list li { display: flex; gap: 8px; align-items: center; }
 .vcard-list .octicon { color: var(--fgColor-muted); }
